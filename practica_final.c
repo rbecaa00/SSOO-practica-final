@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include <stdio.h>	
 #include <unistd.h>
 #include <pthread.h>
 #include <stdlib.h>
@@ -18,7 +18,9 @@ int main(int argc, char* argv[]){
 }
 
 void nuevoCliente(){
+	cipote blanco
 }
+
 
 void accionesCliente(){
 }

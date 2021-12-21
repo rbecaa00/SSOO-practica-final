@@ -21,6 +21,7 @@ void nuevoCliente(){
 }
 
 void accionesCliente(){
+	//Victor escribe aqui
 }
 
 void accionesRecepcionista(){
@@ -36,4 +37,4 @@ void writeLogMessage(char *id, char *msg) {
 	 logFile = fopen(logFileName, "a");
 	 fprintf(logFile, "[%s] %s: %s\n", stnow, id, msg);
 	 fclose(logFile);
-	 }
+ }

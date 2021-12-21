@@ -13,7 +13,8 @@ void accionesRecepcionista();
 void writeLogMessage(char *id, char *msg);
 
 int main(int argc, char* argv[]){
-
+	//**
+	//Esto lo hare Rubén Bécares Álvarez
 	return 0;
 }
 

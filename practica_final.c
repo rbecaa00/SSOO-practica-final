@@ -12,14 +12,16 @@ void accionesCliente();
 void accionesRecepcionista();
 void writeLogMessage(char *id, char *msg);
 
+/**
+ * Implementado por Rubén Bécares Álvarez
+ */
 int main(int argc, char* argv[]){
-	//**
-	//Esto lo hare Rubén Bécares Álvarez
+
 	return 0;
 }
 
 void nuevoCliente(){
-	cipote blanco
+	
 }
 
 

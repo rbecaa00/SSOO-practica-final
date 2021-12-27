@@ -16,7 +16,7 @@ pthread_mutex_t maquinas;
 struct cliente{
 	int id;
 	int atentido; // Tipo boolean 0 no atendido 1 atendido
-	int tipo;	  // Tipo boolean 0 no vip 1 vip
+	int tipo; // Tipo boolean 0 no vip 1 vip
 	int ascensor;
 };
 
@@ -144,7 +144,47 @@ int main(int argc, char *argv[]){
 	return 0;
 }
 
-void nuevoCliente(){
+void nuevoCliente(int signal){
+	
+	int posicionCliente=-1;
+	//Se bloquea el mutex
+	pthread_mutex_lock(&colaClientes);
+	//Bucle para asignar la posición en el id
+	for(int i=0; i<numClientes;i++){
+		if(cliente[i].id==0){
+			posicionCliente=i;
+		}
+	}
+
+	//Caso en el que no caben más clientes
+	if(posicionCliente=-1){
+		printf("No se admiten más clientes")
+	}
+	//Caso en el que caben más clientes y se añade un nuevo cliente
+	else{
+		printf("Hay un nuevo CLIENTE en el hotel");
+		contClientes++;
+		cliente[posicionCliente].id=contClientes;
+		cliente[posicionCliente].atendido=0;
+		cliente[posicionCliente].ascensor=0;
+
+		//Diferencia entre clientes VIPS y normales
+		switch(signal){
+			case SIGUSR1:
+				cliente[posicionCliente].tipo=1;
+				break;
+			case SIGUSR2:
+				cliente[posicionCliente].tipo=2;
+				break;
+
+		}
+
+		//Se crea un hilo nuevo donde irá el cliente nuevo
+		pthread_t aux;
+		pthread_create(&aux,NULL,accionesCliente,NULL);
+	}
+	//Se desbloquea el mutex
+	pthread_mutex_unlock(&colaClientes);
 }
 
 // Hilo

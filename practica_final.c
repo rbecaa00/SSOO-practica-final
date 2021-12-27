@@ -115,21 +115,28 @@ int main(int argc, char* argv[]){
 void nuevoCliente(int signal){
 	
 	int posicionCliente=-1;
+	//Se bloquea el mutex
 	pthread_mutex_lock(&colaClientes);
+	//Bucle para asignar la posición en el id
 	for(int i=0; i<numClientes;i++){
 		if(cliente[i].id==0){
 			posicionCliente=i;
 		}
 	}
+
+	//Caso en el que no caben más clientes
 	if(posicionCliente=-1){
 		printf("No se admiten más clientes")
-	}else{
+	}
+	//Caso en el que caben más clientes y se añade un nuevo cliente
+	else{
 		printf("Hay un nuevo CLIENTE en el hotel");
 		contClientes++;
 		cliente[posicionCliente].id=contClientes;
 		cliente[posicionCliente].atendido=0;
 		cliente[posicionCliente].ascensor=0;
 
+		//Diferencia entre clientes VIPS y normales
 		switch(signal){
 			case SIGUSR1:
 				cliente[posicionCliente].tipo=1;
@@ -139,9 +146,12 @@ void nuevoCliente(int signal){
 				break;
 
 		}
+
+		//Se crea un hilo nuevo donde irá el cliente nuevo
 		pthread_t aux;
 		pthread_create(&aux,NULL,accionesCliente,NULL);
 	}
+	//Se desbloquea el mutex
 	pthread_mutex_unlock(&colaClientes);
 }
 

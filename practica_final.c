@@ -113,12 +113,11 @@ int main(int argc, char* argv[]){
 }
 
 void nuevoCliente(int signal){
-	int clientesRecepcion=0;
+	
 	int posicionCliente=-1;
-	contrClientes++;
-	pthread_mutex_lock(&mutexPacientes);
+	pthread_mutex_lock(&colaClientes);
 	for(int i=0; i<numClientes;i++){
-		if(cliente[i].id==0 && clientesRecepcion==0){
+		if(cliente[i].id==0){
 			posicionCliente=i;
 		}
 	}
@@ -140,9 +139,10 @@ void nuevoCliente(int signal){
 				break;
 
 		}
-		pthread_create(&cliente[posicionCliente].threadCliente,NULL,accionesCliente,(void*)&cliente[posicionCliente].id);
+		pthread_t aux;
+		pthread_create(&aux,NULL,accionesCliente,NULL);
 	}
-	pthread_mutex_unlock(&mutexPacientes);
+	pthread_mutex_unlock(&colaClientes);
 }
 
 //Hilo

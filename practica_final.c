@@ -14,7 +14,7 @@ pthread_mutex_t maquinas;
 
 struct cliente{
 	int id;
-	int atentido; // Tipo boolean 0 no atendido 1 atendido
+	int atendido; // Tipo boolean 0 no atendido 1 atendido
 	int tipo; // Tipo boolean 0 no vip 1 vip
 	int ascensor; 
 };
@@ -36,6 +36,7 @@ void nuevoCliente();
 void accionesCliente();
 void accionesRecepcionista();
 void writeLogMessage(char *id, char *msg);
+int aleatorios(int min, int max); 
 
 /**
  * Implementado por Rubén Bécares Álvarez
@@ -121,7 +122,74 @@ void accionesCliente(){
 	//Victor escribe aqui
 }
 //Hilo
-void accionesRecepcionista(){
+void *accionesRecepcionista(void *arg){
+	//Buscar al cliente y mirar si es vip o no vip 
+	int tiporecepcionista= (int)arg; 
+	int posicion = 0;    
+	int min= 1; 
+	int porcentaje= aleatorios(1, 100); //calculamos numeros aleatorios entre 1 y 100
+	//Para los log
+	char identificador[50]; 
+	char mensaje[200]; 
+
+
+	//Punto 1 y 2 
+	pthread_mutex_lock(&colaClientes);
+	
+	for(int i=0; i<numClientes; i++){
+	
+		if(tiporecepcionista == clientes[i].tipo && clientes[i].atendido==0){
+			if(clientes[i].id!=0 && min < clientes[i].id ){
+			min = clientes[i].id; 
+			posicion = i; 
+			}	
+
+		}
+			
+	}
+		if(min!=0){ //Hay clientes
+		clientes[posicion].atendido==1; //Acctualizando 
+		}
+		pthread_mutex_unlock(&colaClientes); 
+		if(min == 0){
+			sleep(1); 
+		}
+
+	//Calculamos el tipo de atencion 
+	//Puntos 3 y 4
+
+	if(porcentaje <=80){
+		sprintf(identificador, "Cliente %d", clientes[posicion].id); 
+		sprintf(mensaje, "El paciente %d tiene todo en regla\n",clientes[posicion].id);
+		printf("%s:%s", identificador, mensaje); //Imprimimos lo escrito anteriormente  
+		writeLogMessage(identificador, mensaje);
+		sleep(aleatorios(1,4)); 
+		clientes[posicion].atendido==1; //El cliente ya está atendido.
+	}else if(porcentaje >80 && porcentaje <=90){ // Un 10% de los pacientes
+		sprintf(identificador, "El cliente %d" , clientes[posicion].id); 
+		sprintf(mensaje, "El cliente %d está mal identificado", clientes[posicion].id); 
+		writeLogMessage(identificador, mensaje); 
+		printf("%s: %s ", identificador, mensaje); 
+		sleep(aleatorios(2,6)); 
+		clientes[posicion].atendido== 1; //El cliente también ha sido atendido, 
+
+	}else if(porcentaje >90){
+		sprintf(identificador, "El cliente %d", clientes[posicion].id); 
+		sprintf(mensaje, "El cliente %d no presenta el pasapaorte vacunal" , clientes[posicion].id); 
+		writeLogMessage(identificador, mensaje); 
+		printf("%s : %s", identificador,  mensaje); 
+		sleep(aleatorios(6,10)); 
+		clientes[posicion].atendido== -1; //Al no tener el pasaporte vacunal debe abandonar el hotel. 
+
+	}
+		
+	
+
+
+}
+
+int aleatorios(int min, int max){ //Función para calcular numeros aleatorios 
+return rand()% (max-min+1) +min; 
 }
 
 void writeLogMessage(char *id, char *msg) {

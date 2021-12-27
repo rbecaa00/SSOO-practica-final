@@ -16,7 +16,7 @@ struct cliente{
 	int id;
 	int atentido; // Tipo boolean 0 no atendido 1 atendido
 	int tipo; // Tipo boolean 0 no vip 1 vip
-	int ascensor; 
+	int ascensor;
 };
 
 struct cliente *clientes;
@@ -112,8 +112,37 @@ int main(int argc, char* argv[]){
 	return 0;
 }
 
-void nuevoCliente(){
-	
+void nuevoCliente(int signal){
+	int clientesRecepcion=0;
+	int posicionCliente=-1;
+	contrClientes++;
+	pthread_mutex_lock(&mutexPacientes);
+	for(int i=0; i<numClientes;i++){
+		if(cliente[i].id==0 && clientesRecepcion==0){
+			posicionCliente=i;
+		}
+	}
+	if(posicionCliente=-1){
+		printf("No se admiten más clientes")
+	}else{
+		printf("Hay un nuevo CLIENTE en el hotel");
+		contClientes++;
+		cliente[posicionCliente].id=contClientes;
+		cliente[posicionCliente].atendido=0;
+		cliente[posicionCliente].ascensor=0;
+
+		switch(signal){
+			case SIGUSR1:
+				cliente[posicionCliente].tipo=1;
+				break;
+			case SIGUSR2:
+				cliente[posicionCliente].tipo=2;
+				break;
+
+		}
+		pthread_create(&cliente[posicionCliente].threadCliente,NULL,accionesCliente,(void*)&cliente[posicionCliente].id);
+	}
+	pthread_mutex_unlock(&mutexPacientes);
 }
 
 //Hilo

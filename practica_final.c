@@ -6,7 +6,6 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <ctype.h>
-#include <string.h>
 
 pthread_mutex_t fichero;
 pthread_mutex_t colaClientes;
@@ -47,7 +46,7 @@ int main(int argc, char *argv[]){
 	 * Inicialización nombre fichero
 	 *
 	 */
-	strcpy(logFileName, "Practica_Final.log");
+	sprintf(logFileName, "Practica_Final.log");
 
 	// sprintf(ids, "%d", getpid());
 	writeLogMessage("Main", "Inicio programa");

@@ -124,7 +124,7 @@ void accionesCliente(){
 //Hilo
 void *accionesRecepcionista(void *arg){
 	//Buscar al cliente y mirar si es vip o no vip 
-	int tiporecepcionista= (int)arg; 
+	int *recepcionista= (int*)arg; 
 	int posicion = 0;    
 	int min= 1; 
 	int porcentaje= aleatorios(1, 100); //calculamos numeros aleatorios entre 1 y 100
@@ -138,7 +138,7 @@ void *accionesRecepcionista(void *arg){
 	
 	for(int i=0; i<numClientes; i++){
 	
-		if(tiporecepcionista == clientes[i].tipo && clientes[i].atendido==0){
+		if(recepcionista[0] == clientes[i].tipo && clientes[i].atendido==0){
 			if(clientes[i].id!=0 && min < clientes[i].id ){
 			min = clientes[i].id; 
 			posicion = i; 
@@ -153,37 +153,59 @@ void *accionesRecepcionista(void *arg){
 		pthread_mutex_unlock(&colaClientes); 
 		if(min == 0){
 			sleep(1); 
+
+		}else{
+			
+			sprintf(identificador, "Recepcionista_%d", recepcionista[1] ); //Identificador del recepcionista
+			sprintf(mensaje, "Comineza la atencion"); 
+			writeLogMessage(identificador, mensaje);
+		//Se podría poner al inicio del programa, ya que es una de las primeras cosas que hace.
+
+			if(porcentaje <=80){
+		sprintf(mensaje, "El cliente %d tiene todo en regla\n",clientes[posicion].id);
+		printf("%s:%s", identificador, mensaje); //Imprimimos lo escrito anteriormente 
+		sleep(aleatorios(1,4));
+		pthread_mutex_lock(&fichero);
+		writeLogMessage(identificador, mensaje);
+		pthread_mutex_unlock(&fichero); 
+		pthread_mutex_lock(&colaClientes);
+		clientes[posicion].atendido ==1; //El cliente ya está atendido.
+		pthread_mutex_unlock(&colaClientes);
+
+	}else if(porcentaje >80 && porcentaje <=90){ // Un 10% de los pacientes
+
+		sprintf(mensaje, "El cliente %d está mal identificado", clientes[posicion].id); 
+		printf("%s: %s ", identificador, mensaje); 
+		sleep(aleatorios(2,6)); 
+		pthread_mutex_lock(&fichero);
+		writeLogMessage(identificador, mensaje); 
+		pthread_mutex_unlock(&fichero);
+		pthread_mutex_lock(&colaClientes);
+		clientes[posicion].atendido == 1; //El cliente también ha sido atendido, 
+		pthread_mutex_unlock(&colaClientes);
+
+	}else if(porcentaje >90){
+		
+		sprintf(mensaje, "El cliente %d no presenta el pasapaorte vacunal" , clientes[posicion].id); 
+		pthread_mutex_lock(&fichero);
+		writeLogMessage(identificador, mensaje); 
+		pthread_mutex_unlock(&fichero);
+		printf("%s : %s", identificador,  mensaje); 
+		sleep(aleatorios(6,10)); 
+		pthread_mutex_lock(&colaClientes);
+		clientes[posicion].atendido==0; //Al no tener el pasaporte vacunal debe abandonar el hotel. 
+		pthread_mutex_unlock(&colaClientes);
+	}else{
+		sprintf(mensaje, "Ha finalizado la atención");
+		writeLogMessage(identificador, mensaje); 
+	}
+		
+
 		}
 
 	//Calculamos el tipo de atencion 
 	//Puntos 3 y 4
 
-	if(porcentaje <=80){
-		sprintf(identificador, "Cliente %d", clientes[posicion].id); 
-		sprintf(mensaje, "El paciente %d tiene todo en regla\n",clientes[posicion].id);
-		printf("%s:%s", identificador, mensaje); //Imprimimos lo escrito anteriormente  
-		writeLogMessage(identificador, mensaje);
-		sleep(aleatorios(1,4)); 
-		clientes[posicion].atendido==1; //El cliente ya está atendido.
-	}else if(porcentaje >80 && porcentaje <=90){ // Un 10% de los pacientes
-		sprintf(identificador, "El cliente %d" , clientes[posicion].id); 
-		sprintf(mensaje, "El cliente %d está mal identificado", clientes[posicion].id); 
-		writeLogMessage(identificador, mensaje); 
-		printf("%s: %s ", identificador, mensaje); 
-		sleep(aleatorios(2,6)); 
-		clientes[posicion].atendido== 1; //El cliente también ha sido atendido, 
-
-	}else if(porcentaje >90){
-		sprintf(identificador, "El cliente %d", clientes[posicion].id); 
-		sprintf(mensaje, "El cliente %d no presenta el pasapaorte vacunal" , clientes[posicion].id); 
-		writeLogMessage(identificador, mensaje); 
-		printf("%s : %s", identificador,  mensaje); 
-		sleep(aleatorios(6,10)); 
-		clientes[posicion].atendido== -1; //Al no tener el pasaporte vacunal debe abandonar el hotel. 
-
-	}
-		
-	
 
 
 }

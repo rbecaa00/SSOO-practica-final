@@ -40,6 +40,8 @@ void *accionesRecepcionista(void *arg);
 void writeLogMessage(char *id, char *msg);
 int aleatorios(int min, int max); 
 void fin();
+int size(*lista);
+void aumentar();
 
 /**
  * Implementado por Rubén Bécares Álvarez
@@ -93,16 +95,35 @@ int main(int argc, char *argv[]){
 		// sprintf(ids, "%d", getpid());
 		writeLogMessage("Main", "Se ha montando la señal de terminar");
 	}
+	
+	struct sigaction sA;
+	sA.sa_handler = aumentar;
+	if (-1 == sigaction(SIGILL, &sA, NULL)){
+		// sprintf(ids, "%d", getpid());
+		writeLogMessage("Main", "Fallo montando la señal de aumentar");
+		perror("Fallo montando la señal de aumentar");
+		return 1;
+	}else{
+		// sprintf(ids, "%d", getpid());
+		writeLogMessage("Main", "Se ha montando la señal de aumentar");
+	}
 
 	/**
 	 * Inicializacion de recursos
 	 *
 	 */
-
-	numClientes = 20;
+	if(argc == 2){
+		numClientes = atoi(argv[1]);
+	}else if(argc == 3){
+		numClientes = atoi(argv[1]);
+		numMaquinas = atoi(argv[2]);
+	}else{
+		numClientes = 20;
+		numMaquinas = 5;
+	}
+	
 	contClientes = 0;
 	numCliAscensor = 0;
-	numMaquinas = 5;
 	acabar = 0;
 
 	clientes = (struct cliente *)malloc(sizeof(struct cliente) * numClientes);
@@ -140,12 +161,19 @@ int main(int argc, char *argv[]){
 		pause();
 	}
 
-	pthread_exit(NULL);
+	pthread_join(recepcionista_1, NULL);
+	pthread_join(recepcionista_2, NULL);
+	pthread_join(recepcionista_3, NULL);
+
+	while(size(clientes) != 0){
+		sleep(0.1);
+	}
 
 	free(clientes);
 
 	// sprintf(ids, "%d", getpid());
 	writeLogMessage("Main", "Fin programa");
+
 	return 0;
 }
 
@@ -307,6 +335,84 @@ return rand()% (max-min+1) +min;
 
 void fin(){
 	acabar = 1;
+}
+
+int size(*lista){
+	int res = 0;
+	pthread_mutex_lock(&colaClientes);
+	for(int i = 0; i < numClientes; i++){
+		if(clientes[i].id != 0){
+			res++;
+		}
+	}
+	pthread_mutex_unlock(&colaClientes);
+	return res;
+}
+
+void aumentar(){
+	int num = 0;
+	int aumento = 0;
+	int tries = 0
+	do{
+	printf("¿Que desea aumentar?\n");
+	printf("1)Numero de clientes\n");
+	printf("2)Numero de maquinas\n");
+	tries++;
+	scanf( "%d", &num);
+	}while(num!= 1 && num!=2 && tries < 2);
+
+	if(num == 1 || num == 2){
+		printf("Indique en cuanto: ");
+		scanf("%d", &aumento);
+
+		switch (num){
+		case 1:
+			/* Redimensionamos el puntero y lo asignamos a un puntero temporal */
+			pthread_mutex_lock(&colaClientes);
+			struct clientes *tmp_ptr = (struct clientes *)realloc(clientes, sizeof(struct clientes)*(num+numClientes));
+
+			if (tmp_ptr == NULL) {
+				printf("Hubo un error en el aumento de capacidad");
+				perror("Hubo un error en el aumento de capacidad\n");
+			}
+			else {
+				/* Reasignación exitosa. Asignar memoria a clientes */
+				clientes = tmp_ptr;
+				numClientes += num;
+			}
+			pthread_mutex_unlock(&colaClientes);
+			pthread_mutex_lock(&fichero);
+			writeLogMessage("Main","Aumento de clientes a %d", numClientes);
+			pthread_mutex_unlock(&fichero);
+
+			break;
+		case 2:
+			/* Redimensionamos el puntero y lo asignamos a un puntero temporal */
+			pthread_mutex_lock(&maquinasCheckin);
+			int *tmp_ptr = (int*)realloc(clientes, sizeof(int)*(num+numMaquinas));
+
+			if (tmp_ptr == NULL) {
+				printf("Hubo un error en el aumento de capacidad");
+				perror("Hubo un error en el aumento de capacidad\n");
+			}
+			else {
+				/* Reasignación exitosa. Asignar memoria a clientes */
+				clientes = tmp_ptr;
+				numMaquinas += num;
+			}
+			pthread_mutex_unlock(&maquinasCheckin);
+			pthread_mutex_lock(&fichero);
+			writeLogMessage("Main","Aumento de maquinas a %d", numMaquinas);
+			pthread_mutex_unlock(&fichero);
+			break;
+		}
+
+	}else{
+		printf("Demasiados intentos incorrectos\n");
+	}
+
+	
+
 }
 
 void writeLogMessage(char *id, char *msg){

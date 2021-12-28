@@ -26,6 +26,7 @@ int numClientes;
 int contClientes;
 int numCliAscensor;
 int numMaquinas;
+int acabar;
 
 char logFileName[19];
 
@@ -38,6 +39,7 @@ void *accionesCliente(void *arg);
 void *accionesRecepcionista(void *arg);
 void writeLogMessage(char *id, char *msg);
 int aleatorios(int min, int max); 
+void fin();
 
 /**
  * Implementado por Rubén Bécares Álvarez
@@ -81,7 +83,7 @@ int main(int argc, char *argv[]){
 	}
 
 	struct sigaction sC;
-	sC.sa_handler = nuevoCliente;
+	sC.sa_handler = fin;
 	if (-1 == sigaction(SIGINT, &sC, NULL)){
 		// sprintf(ids, "%d", getpid());
 		writeLogMessage("Main", "Fallo montando la señal de terminar");
@@ -101,6 +103,7 @@ int main(int argc, char *argv[]){
 	contClientes = 0;
 	numCliAscensor = 0;
 	numMaquinas = 5;
+	acabar = 0;
 
 	clientes = (struct cliente *)malloc(sizeof(struct cliente) * numClientes);
 	maquinasCheckin = (int *)malloc(sizeof(int) * numMaquinas);
@@ -133,9 +136,11 @@ int main(int argc, char *argv[]){
 	pthread_create(&recepcionista_2, NULL, accionesRecepcionista, &r2);
 	pthread_create(&recepcionista_3, NULL, accionesRecepcionista, &r3);
 
-	while (1){
+	while (!acabar){
 		pause();
 	}
+
+	pthread_exit(NULL);
 
 	free(clientes);
 
@@ -282,6 +287,10 @@ void *accionesRecepcionista(void *arg){
 
 int aleatorios(int min, int max){ //Función para calcular numeros aleatorios 
 return rand()% (max-min+1) +min; 
+}
+
+void fin(){
+	acabar = 1;
 }
 
 void writeLogMessage(char *id, char *msg){

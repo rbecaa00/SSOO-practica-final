@@ -108,7 +108,7 @@ int main(int argc, char *argv[]){
 	for (int i = 0; i < numClientes; i++){
 		clientes[i].id = 0;
 		clientes[i].tipo = 0;
-		clientes[i].atentido = 0;
+		clientes[i].atendido = 0;
 		clientes[i].ascensor = 0;
 	}
 
@@ -127,11 +127,11 @@ int main(int argc, char *argv[]){
 
 	pthread_t recepcionista_1, recepcionista_2, recepcionista_3;
 	int r1[] = {0, 1};
-	int r1[] = {0, 2};
-	int r1[] = {1, 3};
-	pthread_create(&recepcionista_1, NULL, accionesRecepcionista, 0);
-	pthread_create(&recepcionista_2, NULL, accionesRecepcionista, 0);
-	pthread_create(&recepcionista_3, NULL, accionesRecepcionista, 1);
+	int r2[] = {0, 2};
+	int r2[] = {1, 3};
+	pthread_create(&recepcionista_1, NULL, accionesRecepcionista, &r1);
+	pthread_create(&recepcionista_2, NULL, accionesRecepcionista, &r2);
+	pthread_create(&recepcionista_3, NULL, accionesRecepcionista, &r3);
 
 	while (1){
 		pause();

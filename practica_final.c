@@ -128,7 +128,7 @@ int main(int argc, char *argv[]){
 	pthread_t recepcionista_1, recepcionista_2, recepcionista_3;
 	int r1[] = {0, 1};
 	int r2[] = {0, 2};
-	int r2[] = {1, 3};
+	int r3[] = {1, 3};
 	pthread_create(&recepcionista_1, NULL, accionesRecepcionista, &r1);
 	pthread_create(&recepcionista_2, NULL, accionesRecepcionista, &r2);
 	pthread_create(&recepcionista_3, NULL, accionesRecepcionista, &r3);

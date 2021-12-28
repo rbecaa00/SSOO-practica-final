@@ -145,52 +145,101 @@ int main(int argc, char *argv[]){
 }
 
 void nuevoCliente(int signal){
-	
-	int posicionCliente=-1;
-	//Se bloquea el mutex
-	pthread_mutex_lock(&colaClientes);
-	//Bucle para asignar la posición en el id
-	for(int i=0; i<numClientes;i++){
-		if(clientes[i].id==0){
-			posicionCliente=i;
-		}
-	}
-
-	//Caso en el que no caben más clientes
-	if(posicionCliente=-1){
-
-		printf("No se admiten más clientes");
-	}
-	//Caso en el que caben más clientes y se añade un nuevo cliente
-	else{
-		printf("Hay un nuevo CLIENTE en el hotel");
-		contClientes++;
-		clientes[posicionCliente].id=contClientes;
-		clientes[posicionCliente].atendido=0;
-		clientes[posicionCliente].ascensor=0;
-
-		//Diferencia entre clientes VIPS y normales
-		switch(signal){
-			case SIGUSR1:
-				clientes[posicionCliente].tipo=0;
-				break;
-			case SIGUSR2:
-				clientes[posicionCliente].tipo=1;
-				break;
-
+	if(acabar==0){
+		int posicionCliente=-1;
+		//Se bloquea el mutex
+		pthread_mutex_lock(&colaClientes);
+		//Bucle para asignar la posición en el id
+		for(int i=0; i<numClientes;i++){
+			if(clientes[i].id==0){
+				posicionCliente=i;
+			}
 		}
 
-		//Se crea un hilo nuevo donde irá el cliente nuevo
-		pthread_t aux;
-		pthread_create(&aux,NULL,accionesCliente,NULL);
+		//Caso en el que no caben más clientes
+		if(posicionCliente=-1){
+
+			printf("No se admiten más clientes");
+		}
+		//Caso en el que caben más clientes y se añade un nuevo cliente
+		else{
+			printf("Hay un nuevo CLIENTE en el hotel");
+			contClientes++;
+			clientes[posicionCliente].id=contClientes;
+			clientes[posicionCliente].atendido=0;
+			clientes[posicionCliente].ascensor=0;
+
+			//Diferencia entre clientes VIPS y normales
+			switch(signal){
+				case SIGUSR1:
+					clientes[posicionCliente].tipo=0;
+					break;
+				case SIGUSR2:
+					clientes[posicionCliente].tipo=1;
+					break;
+
+			}
+
+			//Se crea un hilo nuevo donde irá el cliente nuevo
+			pthread_t aux;
+			pthread_create(&aux,NULL,accionesCliente,NULL);
+		}
+		//Se desbloquea el mutex
+		pthread_mutex_unlock(&colaClientes);
 	}
-	//Se desbloquea el mutex
-	pthread_mutex_unlock(&colaClientes);
 }
 
 // Hilo
 void *accionesCliente(void *arg){
-	// Victor escribe aqui
+	char tipo[20];
+	char hora[20];
+	int id=(int*)cliente;
+	int posicionCliente;
+
+	for(int i=0; i<numClientes; i++){
+		if(cliente[i].id=id){
+			posicionCliente=i;
+		}
+	}
+
+	sprintf(tipo,"Cliente %d:",id);
+	sprintf(hora,"acabo de entrar en el hotel\n");
+	pthread_mutex_lock(&fichero);
+	writeLogMessage(tipo,hora);
+	printf("%s: %s",tipo,hora);
+	pthread_mutex_unlock(&fichero);
+
+	while(cliente[posicionCliente].atendido==0){
+		int num;
+		num = calculaAleatorios(1, 100);
+		if(num<=20){
+			sprintf(tipo,"Cliente %d:",id);
+			sprintf(hora,"Me he cansado de esperar y me voy\n");
+			pthread_mutex_lock(&fichero);
+			writeLogMessage(tipo, hora);
+			printf("%s: %s", tipo, hora);
+			pthread_mutex_unlock(&fichero);
+
+		}else if(num>30 && num<=35){
+			sprintf(tipo,"Cliente %d:",id);
+			sprintf(hora,"He ido al baño y he perdido el truno\n");
+			pthread_mutex_lock(&fichero);
+			writeLogMessage(tipo,hora);
+			printf("%s: %s", tipo, hora);
+			pthread_mutex_unlock(&fichero);
+			
+		}
+		pthread_mutex_lock(&colaClientes);
+		terminarHiloPaciente(posicionCliente);
+		pthread_mutex_unlock(&colaClientes);
+		pthread_exit(&cliente[posicionCliente]);
+		sleep(3);	
+	}
+
+	while(cliente[posicionCliente].ascensor == 0 ){
+		sleep(1);
+	}
+	
 }
 //Hilo
 void *accionesRecepcionista(void *arg){

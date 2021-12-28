@@ -33,9 +33,9 @@ FILE *logFile;
 
 char ids[20];
 
-void nuevoCliente();
-void accionesCliente();
-void accionesRecepcionista();
+void nuevoCliente(int signal);
+void *accionesCliente(void *arg);
+void *accionesRecepcionista(void *arg);
 void writeLogMessage(char *id, char *msg);
 int aleatorios(int min, int max); 
 
@@ -188,7 +188,7 @@ void nuevoCliente(int signal){
 }
 
 // Hilo
-void accionesCliente(){
+void *accionesCliente(void *arg){
 	// Victor escribe aqui
 }
 //Hilo

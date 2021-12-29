@@ -40,7 +40,7 @@ void *accionesRecepcionista(void *arg);
 void writeLogMessage(char *id, char *msg);
 int aleatorios(int min, int max); 
 void fin();
-int size(*lista);
+int sizeClientes();
 void aumentar();
 
 /**
@@ -165,7 +165,7 @@ int main(int argc, char *argv[]){
 	pthread_join(recepcionista_2, NULL);
 	pthread_join(recepcionista_3, NULL);
 
-	while(size(clientes) != 0){
+	while(sizeClientes() != 0){
 		sleep(0.1);
 	}
 
@@ -244,7 +244,7 @@ void *accionesCliente(void *arg){
 
 	while(cliente[posicionCliente].atendido==0){
 		int num;
-		num = calculaAleatorios(1, 100);
+		num = aleatorios(1, 100);
 		if(num<=20){
 			sprintf(tipo,"Cliente %d:",id);
 			sprintf(hora,"Me he cansado de esperar y me voy\n");
@@ -322,9 +322,11 @@ void *accionesRecepcionista(void *arg){
 		sprintf(mensaje, "El cliente %d tiene todo en regla",clientes[posicion].id);
 		printf("%s:%s \n", identificador, mensaje); //Imprimimos lo escrito anteriormente 
 		sleep(aleatorios(1,4));
+		
 		pthread_mutex_lock(&fichero);
 		writeLogMessage(identificador, mensaje);
 		pthread_mutex_unlock(&fichero); 
+
 		pthread_mutex_lock(&colaClientes);
 		clientes[posicion].atendido ==1; //El cliente ya está atendido.
 		pthread_mutex_unlock(&colaClientes);
@@ -334,9 +336,11 @@ void *accionesRecepcionista(void *arg){
 		sprintf(mensaje, "El cliente %d está mal identificado", clientes[posicion].id); 
 		printf("%s: %s \n", identificador, mensaje); 
 		sleep(aleatorios(2,6)); 
+
 		pthread_mutex_lock(&fichero);
 		writeLogMessage(identificador, mensaje); 
 		pthread_mutex_unlock(&fichero);
+
 		pthread_mutex_lock(&colaClientes);
 		clientes[posicion].atendido == 1; //El cliente también ha sido atendido, 
 		pthread_mutex_unlock(&colaClientes);
@@ -386,7 +390,7 @@ void fin(){
 	acabar = 1;
 }
 
-int size(*lista){
+int sizeClientes(){
 	int res = 0;
 	pthread_mutex_lock(&colaClientes);
 	for(int i = 0; i < numClientes; i++){
@@ -401,13 +405,14 @@ int size(*lista){
 void aumentar(){
 	int num = 0;
 	int aumento = 0;
-	int tries = 0
+	int tries = 0;
+	char mensaje[25];
 	do{
-	printf("¿Que desea aumentar?\n");
-	printf("1)Numero de clientes\n");
-	printf("2)Numero de maquinas\n");
-	tries++;
-	scanf( "%d", &num);
+		printf("¿Que desea aumentar?\n");
+		printf("1)Numero de clientes\n");
+		printf("2)Numero de maquinas\n");
+		tries++;
+		scanf( "%d", &num);
 	}while(num!= 1 && num!=2 && tries < 2);
 
 	if(num == 1 || num == 2){
@@ -418,40 +423,46 @@ void aumentar(){
 		case 1:
 			/* Redimensionamos el puntero y lo asignamos a un puntero temporal */
 			pthread_mutex_lock(&colaClientes);
-			struct clientes *tmp_ptr = (struct clientes *)realloc(clientes, sizeof(struct clientes)*(num+numClientes));
+			struct cliente *tmp_clie;
+			tmp_clie = (struct cliente *)realloc(clientes, sizeof(struct cliente)*(num+numClientes));
 
-			if (tmp_ptr == NULL) {
+			if (tmp_clie == NULL) {
 				printf("Hubo un error en el aumento de capacidad");
 				perror("Hubo un error en el aumento de capacidad\n");
 			}
 			else {
 				/* Reasignación exitosa. Asignar memoria a clientes */
-				clientes = tmp_ptr;
+				clientes = tmp_clie;
 				numClientes += num;
 			}
 			pthread_mutex_unlock(&colaClientes);
+
 			pthread_mutex_lock(&fichero);
-			writeLogMessage("Main","Aumento de clientes a %d", numClientes);
+			sprintf(mensaje,"Aumento de clientes a %d", numClientes);
+			writeLogMessage("Main", mensaje);
 			pthread_mutex_unlock(&fichero);
 
 			break;
 		case 2:
 			/* Redimensionamos el puntero y lo asignamos a un puntero temporal */
-			pthread_mutex_lock(&maquinasCheckin);
-			int *tmp_ptr = (int*)realloc(clientes, sizeof(int)*(num+numMaquinas));
+			pthread_mutex_lock(&maquinas);
+			int *tmp_maq;
+			tmp_maq = (int*)realloc(clientes, sizeof(int)*(num+numMaquinas));
 
-			if (tmp_ptr == NULL) {
+			if (tmp_maq == NULL) {
 				printf("Hubo un error en el aumento de capacidad");
 				perror("Hubo un error en el aumento de capacidad\n");
 			}
 			else {
 				/* Reasignación exitosa. Asignar memoria a clientes */
-				clientes = tmp_ptr;
+				maquinasCheckin = tmp_maq;
 				numMaquinas += num;
 			}
-			pthread_mutex_unlock(&maquinasCheckin);
+			pthread_mutex_unlock(&maquinas);
+
 			pthread_mutex_lock(&fichero);
-			writeLogMessage("Main","Aumento de maquinas a %d", numMaquinas);
+			sprintf(mensaje, "Aumento de maquinas a %d", numMaquinas);
+			writeLogMessage("Main",mensaje);
 			pthread_mutex_unlock(&fichero);
 			break;
 		}

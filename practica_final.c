@@ -228,23 +228,53 @@ void *accionesCliente(void *arg){
 	char hora[20];
 	int id=(int*)cliente;
 	int posicionCliente;
-
+	
+	//Bucle para identificar el id de un cliente en especifico
 	for(int i=0; i<numClientes; i++){
 		if(cliente[i].id=id){
 			posicionCliente=i;
 		}
 	}
 
+	//sprintf sirve para crear una cadena y guardarla en una variable
 	sprintf(tipo,"Cliente %d:",id);
 	sprintf(hora,"acabo de entrar en el hotel\n");
+	//Lock del mutex para que el writeMessage vaya uno a uno al log
 	pthread_mutex_lock(&fichero);
 	writeLogMessage(tipo,hora);
 	printf("%s: %s",tipo,hora);
+	//Unluck del mutex 
 	pthread_mutex_unlock(&fichero);
 
+	
+	
 	while(cliente[posicionCliente].atendido==0){
 		int num;
+		//Probabilidad cliente
 		num = aleatorios(1, 100);
+		if(*maquinasCheckin==0){
+			*maquinasCheckin = 1;
+			sleep(6);
+			num = aleatorios(1,100);
+			*maquinasCheckin = 0;
+			if(num<30){
+				sprintf(tipo,"Cliente %d:",id);
+				sprintf(hora,"Me fui para la habitacion por las escaleras\n");
+				pthread_mutex_lock(&fichero);
+				writeLogMessage(tipo, hora);
+				printf("%s: %s", tipo, hora);
+				pthread_mutex_unlock(&fichero);
+			}else{
+				cliente[posicionCliente].ascensor == 1;
+				printf(tipo,"Cliente %d:",id);
+				//Falta preguntar el que si aqui puedo poner el contador de cuanta gente se puede meter mas
+				sprintf(hora,"Esta en el ascensor esperando\n");
+				pthread_mutex_lock(&fichero);
+				writeLogMessage(tipo, hora);
+				printf("%s: %s", tipo, hora);
+				pthread_mutex_unlock(&fichero);
+			}
+		}
 		if(num<=20){
 			sprintf(tipo,"Cliente %d:",id);
 			sprintf(hora,"Me he cansado de esperar y me voy\n");

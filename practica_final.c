@@ -297,6 +297,7 @@ void *accionesCliente(void *arg){
 					pthread_mutex_unlock(&fichero);
 				}else{
 					cliente[posicionCliente].ascensor == 1;
+					numCliAscensor++;
 					printf(tipo,"Cliente %d:",id);
 					//Falta preguntar el que si aqui puedo poner el contador de cuanta gente se puede meter mas
 					sprintf(hora,"Esta en el ascensor esperando\n");
@@ -316,14 +317,34 @@ void *accionesCliente(void *arg){
 		//Acabar checkin = 0
 		if(checkin == 0){
 			if(cliente[posicionCliente].atendido == 1){
-
+				accionesRecepcionista(arg);
 			}else{
 
 			}
 		}
 		//3-6segundos hasta que baje
 		if(cliente[posicionCliente].ascensor == 1){
-
+			if(numCliAscensor == 5){
+				numCliAscensor = 0;
+				
+				printf(tipo,"Cliente %d:",id);
+				sprintf(hora,"El ascensor llego al limite de personas y procede a subir\n");
+				pthread_mutex_lock(&fichero);
+				writeLogMessage(tipo, hora);
+				printf("%s: %s", tipo, hora);
+				pthread_mutex_unlock(&fichero);
+				sleep(aleatorios(3,6));
+				
+			}
+			if(numCliAscensor != 5){
+				numCliAscensor++;
+				printf(tipo,"Cliente %d:",id);
+				sprintf(hora,"Esta esperando en el ascensor\n");
+				pthread_mutex_lock(&fichero);
+				writeLogMessage(tipo, hora);
+				printf("%s: %s", tipo, hora);
+				pthread_mutex_unlock(&fichero);
+			}
 		}
 
 

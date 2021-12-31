@@ -359,86 +359,78 @@ void *accionesRecepcionista(void *arg){
 	pthread_mutex_lock(&colaClientes);
 	
 	
-	for(int i=0; i<numClientes; i++){
-	
-		if(recepcionista[0] == clientes[i].tipo && clientes[i].atendido==0){
-			if(clientes[i].id!=0 && min < clientes[i].id ){
-			min = clientes[i].id; 
-			posicion = i; 
-			}	
-
+		for(int i=0; i<numClientes; i++){
+			if(recepcionista[0] == clientes[i].tipo && clientes[i].atendido==0){
+				if(clientes[i].id!=0 && min < clientes[i].id ){
+					min = clientes[i].id; 
+					posicion = i; 
+				}	
+			}
 		}
-			
-	}
 		if(min!=0){ //Hay clientes
-		clientes[posicion].atendido==1; //Acctualizando 
+			clientes[posicion].atendido==1; //Acctualizando 
 		}
 		pthread_mutex_unlock(&colaClientes); 
 		if(min == 0){
 			sleep(1); 
-
 		}else{
-			 //PONER VARIABLE CONDICION PARA CUANDO SE TERMINE EL PROGRAMA 
+			//PONER VARIABLE CONDICION PARA CUANDO SE TERMINE EL PROGRAMA 
 			sprintf(identificador, "Recepcionista_%d", recepcionista[1] ); //Identificador del recepcionista
 			sprintf(mensaje, "Comineza la atencion"); 
 			writeLogMessage(identificador, mensaje);
-		//Se podría poner al inicio del programa, ya que es una de las primeras cosas que hace.
+			//Se podría poner al inicio del programa, ya que es una de las primeras cosas que hace.
 
 			if(porcentaje <=80){
-		sprintf(mensaje, "El cliente %d tiene todo en regla",clientes[posicion].id);
-		printf("%s:%s \n", identificador, mensaje); //Imprimimos lo escrito anteriormente 
-		sleep(aleatorios(1,4));
+			sprintf(mensaje, "El cliente %d tiene todo en regla",clientes[posicion].id);
+			printf("%s:%s \n", identificador, mensaje); //Imprimimos lo escrito anteriormente 
+			sleep(aleatorios(1,4));
 		
-		pthread_mutex_lock(&fichero);
-		writeLogMessage(identificador, mensaje);
-		pthread_mutex_unlock(&fichero); 
+			pthread_mutex_lock(&fichero);
+			writeLogMessage(identificador, mensaje);
+			pthread_mutex_unlock(&fichero); 
 
-		pthread_mutex_lock(&colaClientes);
-		clientes[posicion].atendido ==1; //El cliente ya está atendido.
-		pthread_mutex_unlock(&colaClientes);
+			pthread_mutex_lock(&colaClientes);
+			clientes[posicion].atendido ==1; //El cliente ya está atendido.
+			pthread_mutex_unlock(&colaClientes);
 
-	}else if(porcentaje >80 && porcentaje <=90){ // Un 10% de los pacientes
+			}else if(porcentaje >80 && porcentaje <=90){ // Un 10% de los pacientes
 
-		sprintf(mensaje, "El cliente %d está mal identificado", clientes[posicion].id); 
-		printf("%s: %s \n", identificador, mensaje); 
-		sleep(aleatorios(2,6)); 
+				sprintf(mensaje, "El cliente %d está mal identificado", clientes[posicion].id); 
+				printf("%s: %s \n", identificador, mensaje); 
+				sleep(aleatorios(2,6)); 
 
-		pthread_mutex_lock(&fichero);
-		writeLogMessage(identificador, mensaje); 
-		pthread_mutex_unlock(&fichero);
+				pthread_mutex_lock(&fichero);
+				writeLogMessage(identificador, mensaje); 
+				pthread_mutex_unlock(&fichero);
 
-		pthread_mutex_lock(&colaClientes);
-		clientes[posicion].atendido == 1; //El cliente también ha sido atendido, 
-		pthread_mutex_unlock(&colaClientes);
+				pthread_mutex_lock(&colaClientes);
+				clientes[posicion].atendido == 1; //El cliente también ha sido atendido, 
+				pthread_mutex_unlock(&colaClientes);
 
-	}else if(porcentaje >90){
-		
-		sprintf(mensaje, "El cliente %d no presenta el pasapaorte vacunal" , clientes[posicion].id); 
-		pthread_mutex_lock(&fichero);
-		writeLogMessage(identificador, mensaje); 
-		pthread_mutex_unlock(&fichero);
-		printf("%s : %s \n", identificador,  mensaje); 
-		sleep(aleatorios(6,10)); 
-		pthread_mutex_lock(&colaClientes);
-		clientes[posicion].atendido==0; //Al no tener el pasaporte vacunal debe abandonar el hotel. 
-		pthread_mutex_unlock(&colaClientes);
-	} 
-		sprintf(mensaje, "Ha finalizado la atención");
-		writeLogMessage(identificador, mensaje); 
+			}else if(porcentaje >90){
+				
+				sprintf(mensaje, "El cliente %d no presenta el pasapaorte vacunal" , clientes[posicion].id); 
+				pthread_mutex_lock(&fichero);
+				writeLogMessage(identificador, mensaje); 
+				pthread_mutex_unlock(&fichero);
+				printf("%s : %s \n", identificador,  mensaje); 
+				sleep(aleatorios(6,10)); 
+				pthread_mutex_lock(&colaClientes);
+				clientes[posicion].atendido==0; //Al no tener el pasaporte vacunal debe abandonar el hotel. 
+				pthread_mutex_unlock(&colaClientes);
+			} 
+			sprintf(mensaje, "Ha finalizado la atención");
+			writeLogMessage(identificador, mensaje); 
 
-		if(recepcionista[0]==0){
-		contador+=1; 
-			if(contador == 5){
-				contador=0; 
-				sleep(5); 
+			if(recepcionista[0]==0){
+				contador+=1; 
+				if(contador == 5){
+					contador=0; 
+					sleep(5); 
 
-			}
-		}	
-
+				}
+			}	
 		}
-	
-		
-
 	}
 
 	//Calculamos el tipo de atencion 

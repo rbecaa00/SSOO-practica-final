@@ -366,9 +366,10 @@ void *accionesRecepcionista(void *arg){
 	//Buscar al cliente y mirar si es vip o no vip 
 	int *recepcionista= (int*)arg; 
 	int posicion = 0;    
-	int min= 1; 
-	int porcentaje= aleatorios(1, 100); //calculamos numeros aleatorios entre 1 y 100
+	int min = 1; 
+	int porcentaje; //calculamos numeros aleatorios entre 1 y 100
 	int contador = 0; 
+	srand(time(NULL)); //Inicializamos la semilla 
 	//Para los log
 	char identificador[50]; 
 	char mensaje[200]; 
@@ -382,6 +383,7 @@ void *accionesRecepcionista(void *arg){
 	
 		for(int i=0; i<numClientes; i++){
 			if(recepcionista[0] == clientes[i].tipo && clientes[i].atendido==0){
+				porcentaje = aleatorios(1, 100);
 				if(clientes[i].id!=0 && min < clientes[i].id ){
 					min = clientes[i].id; 
 					posicion = i; 
@@ -390,6 +392,9 @@ void *accionesRecepcionista(void *arg){
 		}
 		if(min!=0){ //Hay clientes
 			clientes[posicion].atendido==1; //Acctualizando 
+			//Cuando el cliente ya ha sido atendido vuelvo a poner el minimo a cero para que no lo vuelva a atender 
+			clientes[posicion]. id = 0; 
+		 
 		}
 		pthread_mutex_unlock(&colaClientes); 
 		if(min == 0){
@@ -411,7 +416,7 @@ void *accionesRecepcionista(void *arg){
 			pthread_mutex_unlock(&fichero); 
 
 			pthread_mutex_lock(&colaClientes);
-			clientes[posicion].atendido ==1; //El cliente ya está atendido.
+			clientes[posicion].atendido ==2; //El cliente ya está atendido 
 			pthread_mutex_unlock(&colaClientes);
 
 			}else if(porcentaje >80 && porcentaje <=90){ // Un 10% de los pacientes
@@ -425,7 +430,7 @@ void *accionesRecepcionista(void *arg){
 				pthread_mutex_unlock(&fichero);
 
 				pthread_mutex_lock(&colaClientes);
-				clientes[posicion].atendido == 1; //El cliente también ha sido atendido, 
+				clientes[posicion].atendido == 2; //El cliente también ha sido atendido
 				pthread_mutex_unlock(&colaClientes);
 
 			}else if(porcentaje >90){

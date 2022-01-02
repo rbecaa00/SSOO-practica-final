@@ -392,8 +392,9 @@ void *accionesRecepcionista(void *arg){
 		}
 		if(min!=0){ //Hay clientes
 			clientes[posicion].atendido==1; //Acctualizando
-		 
+			min = 0; 
 		}
+
 		pthread_mutex_unlock(&colaClientes); 
 		if(min == 0){
 			sleep(1); 
@@ -401,7 +402,9 @@ void *accionesRecepcionista(void *arg){
 			//PONER VARIABLE CONDICION PARA CUANDO SE TERMINE EL PROGRAMA 
 			sprintf(identificador, "Recepcionista_%d", recepcionista[1] ); //Identificador del recepcionista
 			sprintf(mensaje, "Comineza la atencion"); 
+			pthread_mutex_lock(&fichero);
 			writeLogMessage(identificador, mensaje);
+			pthread_mutex_unlock(&fichero);
 			//Se podría poner al inicio del programa, ya que es una de las primeras cosas que hace.
 
 			if(porcentaje <=80){
@@ -441,13 +444,14 @@ void *accionesRecepcionista(void *arg){
 				sleep(aleatorios(6,10)); 
 				pthread_mutex_lock(&colaClientes);
 				clientes[posicion].atendido==0; //Al no tener el pasaporte vacunal debe abandonar el hotel. 
+				clientes[posicion].id== 0; // Se pone su id a cero al abandonar el hotel
 				pthread_mutex_unlock(&colaClientes);
 			} 
+
 			sprintf(mensaje, "Ha finalizado la atención");
+			pthread_mutex_lock(&fichero);
 			writeLogMessage(identificador, mensaje); 
-			if(cliente[posicion].atendido == 2){
-				min = 0;  //Ponemos el minimo a cero para que no vuelva el recepcionista a coger este cliente 
-			}
+			pthread_mutex_unlock(&fichero);
 
 
 			//PAUSA para el café cuando el recepcionista haya atendidio a 5 clientes, siempre que sea no vip 

@@ -391,9 +391,7 @@ void *accionesRecepcionista(void *arg){
 			}
 		}
 		if(min!=0){ //Hay clientes
-			clientes[posicion].atendido==1; //Acctualizando 
-			//Cuando el cliente ya ha sido atendido vuelvo a poner el minimo a cero para que no lo vuelva a atender 
-			clientes[posicion].id = 0; 
+			clientes[posicion].atendido==1; //Acctualizando
 		 
 		}
 		pthread_mutex_unlock(&colaClientes); 
@@ -447,7 +445,12 @@ void *accionesRecepcionista(void *arg){
 			} 
 			sprintf(mensaje, "Ha finalizado la atención");
 			writeLogMessage(identificador, mensaje); 
+			if(cliente[posicion].atendido == 2){
+				min = 0;  //Ponemos el minimo a cero para que no vuelva el recepcionista a coger este cliente 
+			}
 
+
+			//PAUSA para el café cuando el recepcionista haya atendidio a 5 clientes, siempre que sea no vip 
 			if(recepcionista[0]==0){
 				contador+=1; 
 				if(contador == 5){

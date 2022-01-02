@@ -257,6 +257,7 @@ void *accionesCliente(void *arg){
 		if(num<10){
 			checkin = 1;
 		}else{
+			num = aleatorios(1, 100);
 			if(num<=20){
 				checkin = 1;
 				sprintf(tipo,"Cliente %d:",id);
@@ -281,13 +282,21 @@ void *accionesCliente(void *arg){
 				writeLogMessage(tipo,hora);
 				printf("%s: %s", tipo, hora);
 				pthread_mutex_unlock(&fichero);
+			}else{
+				sprintf(tipo,"Cliente %d:",id);
+				sprintf(hora,"Estoy esperando en la cola para ser atendido.\n");
+				pthread_mutex_lock(&fichero);
+				writeLogMessage(tipo,hora);
+				printf("%s: %s", tipo, hora);
+				pthread_mutex_unlock(&fichero);
+			}
 		}
 		if(checkin == 1){
 			if(*maquinasCheckin==0){
-				*maquinasCheckin = 1;
+				maquinasCheckin = 1;
 				sleep(6);
 				num = aleatorios(1,100);
-				*maquinasCheckin = 0;
+				maquinasCheckin = 0;
 				if(num<30){
 					sprintf(tipo,"Cliente %d:",id);
 					sprintf(hora,"Me fui para la habitacion por las escaleras\n");
@@ -318,9 +327,6 @@ void *accionesCliente(void *arg){
 		if(checkin == 0){
 			if(cliente[posicionCliente].atendido == 1){
 				accionesRecepcionista(arg);
-			}else{
-
-			}
 		}
 		//3-6segundos hasta que baje
 		if(cliente[posicionCliente].ascensor == 1){

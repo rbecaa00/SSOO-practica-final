@@ -393,7 +393,7 @@ void *accionesRecepcionista(void *arg){
 		if(min!=0){ //Hay clientes
 			clientes[posicion].atendido==1; //Acctualizando 
 			//Cuando el cliente ya ha sido atendido vuelvo a poner el minimo a cero para que no lo vuelva a atender 
-			clientes[posicion]. id = 0; 
+			clientes[posicion].id = 0; 
 		 
 		}
 		pthread_mutex_unlock(&colaClientes); 

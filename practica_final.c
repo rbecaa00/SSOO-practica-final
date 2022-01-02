@@ -383,7 +383,7 @@ void *accionesRecepcionista(void *arg){
 
 	//Punto 1 y 2 
 
-	while(1){
+	while(acabar!=1){
 	pthread_mutex_lock(&colaClientes);
 	
 	
@@ -398,7 +398,8 @@ void *accionesRecepcionista(void *arg){
 		}
 		if(min!=0){ //Hay clientes
 			clientes[posicion].atendido==1; //Acctualizando
-			min = 0; 
+			min = 0;
+			  
 		}
 
 		pthread_mutex_unlock(&colaClientes); 
@@ -415,13 +416,11 @@ void *accionesRecepcionista(void *arg){
 
 			if(porcentaje <=80){
 			sprintf(mensaje, "El cliente %d tiene todo en regla",clientes[posicion].id);
-			printf("%s:%s \n", identificador, mensaje); //Imprimimos lo escrito anteriormente 
 			sleep(aleatorios(1,4));
-		
+			printf("%s:%s \n", identificador, mensaje);
 			pthread_mutex_lock(&fichero);
 			writeLogMessage(identificador, mensaje);
 			pthread_mutex_unlock(&fichero); 
-
 			pthread_mutex_lock(&colaClientes);
 			clientes[posicion].atendido ==2; //El cliente ya está atendido 
 			pthread_mutex_unlock(&colaClientes);
@@ -429,9 +428,8 @@ void *accionesRecepcionista(void *arg){
 			}else if(porcentaje >80 && porcentaje <=90){ // Un 10% de los pacientes
 
 				sprintf(mensaje, "El cliente %d está mal identificado", clientes[posicion].id); 
-				printf("%s: %s \n", identificador, mensaje); 
 				sleep(aleatorios(2,6)); 
-
+				printf("%s: %s \n", identificador, mensaje); 
 				pthread_mutex_lock(&fichero);
 				writeLogMessage(identificador, mensaje); 
 				pthread_mutex_unlock(&fichero);
@@ -446,11 +444,10 @@ void *accionesRecepcionista(void *arg){
 				pthread_mutex_lock(&fichero);
 				writeLogMessage(identificador, mensaje); 
 				pthread_mutex_unlock(&fichero);
-				printf("%s : %s \n", identificador,  mensaje); 
 				sleep(aleatorios(6,10)); 
+				printf("%s : %s \n", identificador,  mensaje); 
 				pthread_mutex_lock(&colaClientes);
 				clientes[posicion].atendido==0; //Al no tener el pasaporte vacunal debe abandonar el hotel. 
-				clientes[posicion].id== 0; // Se pone su id a cero al abandonar el hotel
 				pthread_mutex_unlock(&colaClientes);
 			} 
 
@@ -471,10 +468,6 @@ void *accionesRecepcionista(void *arg){
 			}	
 		}
 	}
-
-	//Calculamos el tipo de atencion 
-	//Puntos 3 y 4
-
 
 
 }

@@ -377,6 +377,9 @@ void *accionesCliente(void *arg){
 			}
 		}
 
+		while(cliente[posicionCliente].ascensor == 0 ){
+			sleep(1);
+		}
 
 
 		pthread_mutex_lock(&colaClientes);

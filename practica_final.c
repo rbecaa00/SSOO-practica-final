@@ -250,6 +250,7 @@ void *accionesCliente(void *arg){
 	
 	while(cliente[posicionCliente].atendido==0){
 		int num, maquinasCheckinVariable;
+		int i = 0;
 		//Probabilidad cliente
 		num = aleatorios(1, 100);
 		
@@ -291,17 +292,15 @@ void *accionesCliente(void *arg){
 			}
 		}
 		if(checkin == 1){
-			for(int i = 0; i<numMaquinas; i++){
+			while(maquinasCheckinVariable != NULL){
 				if(*maquinasCheckin==0){
 					maquinasCheckinVariable=0;
-					/*
-					Aqui me falta el como salir de un bucle si no puedo utilizar el break
-					*/
 				}
 				if(i==numMaquinas-1){
 					maquinasCheckinVariable == 1;
 				}
 				*maquinasCheckin++;
+				i++;
 			}
 			if(maquinasCheckinVariable==0){
 				maquinasCheckinVariable = 1;

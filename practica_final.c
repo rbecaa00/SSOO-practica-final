@@ -240,49 +240,59 @@ void *accionesCliente(void *arg){
 	//Unlock del mutex 
 	pthread_mutex_unlock(&fichero);
 
-	while(clientes[posicionCliente].atendido==0){
-		int num, maquinasCheckinVariable;
-		int i = 0;
-		//Probabilidad cliente
-		num = aleatorios(1, 100);
+	
+	int num, maquinasCheckinVariable;
+	int i = 0;
+	//Probabilidad cliente
+	num = aleatorios(1, 100);
 		
-		if(num<10){
-			checkin = 1;
-		}else{
+	if(num<10){
+		checkin = 1;
+	}else{
 			num = aleatorios(1, 100);
-			if(num<=20){
-				checkin = 1;
-				sprintf(tipo,"Cliente %d:",id);
-				sprintf(hora,"Me he cansado de esperar y me voy a las maquinas de Checking\n");
-				pthread_mutex_lock(&fichero);
-				writeLogMessage(tipo, hora);
-				printf("%s: %s", tipo, hora);
-				pthread_mutex_unlock(&fichero);
+		if(num<=20){
+			checkin = 1;
+			sprintf(tipo,"Cliente %d:",id);
+			sprintf(hora,"Me he cansado de esperar y me voy a las maquinas de Checking\n");
+			pthread_mutex_lock(&fichero);
+			clientes[posicionCliente].atendido == 1;
+			writeLogMessage(tipo, hora);
+			printf("%s: %s", tipo, hora);
+			pthread_mutex_unlock(&fichero);
 
-			}else if(num>30 && num<=35){
-				sprintf(tipo,"Cliente %d:",id);
-				sprintf(hora,"He ido al baño y he perdido el truno\n");
-				pthread_mutex_lock(&fichero);
-				writeLogMessage(tipo,hora);
-				printf("%s: %s", tipo, hora);
-				pthread_mutex_unlock(&fichero);
+		}else if(num>30 && num<=35){
+			sprintf(tipo,"Cliente %d:",id);
+			sprintf(hora,"He ido al baño y he perdido el truno\n");
+			pthread_mutex_lock(&colaClientes);
+			clientes[posicionCliente].atendido = 3;
+			clientes[posicionCliente].id = 0;
+			pthread_mutex_unlock(&colaClientes);
+			pthread_mutex_lock(&fichero);
+			writeLogMessage(tipo,hora);
+			printf("%s: %s", tipo, hora);
+			pthread_mutex_unlock(&fichero);
 
-			}else if(num>35 && num<45){
-				sprintf(tipo,"Cliente %d:",id);
-				sprintf(hora,"Me canse de esperar y me fui\n");
-				pthread_mutex_lock(&fichero);
-				writeLogMessage(tipo,hora);
-				printf("%s: %s", tipo, hora);
-				pthread_mutex_unlock(&fichero);
-			}else{
-				sprintf(tipo,"Cliente %d:",id);
-				sprintf(hora,"Estoy esperando en la cola para ser atendido.\n");
-				pthread_mutex_lock(&fichero);
-				writeLogMessage(tipo,hora);
-				printf("%s: %s", tipo, hora);
-				pthread_mutex_unlock(&fichero);
-			}
+		}else if(num>35 && num<45){
+			sprintf(tipo,"Cliente %d:",id);
+			sprintf(hora,"Me canse de esperar y me fui\n");
+			pthread_mutex_lock(&colaClientes);
+			clientes[posicionCliente].atendido = 3;
+			clientes[posicionCliente].id = 0;
+			pthread_mutex_unlock(&colaClientes);
+			pthread_mutex_lock(&fichero);
+			writeLogMessage(tipo,hora);
+			printf("%s: %s", tipo, hora);
+			pthread_mutex_unlock(&fichero);
+		}else{
+			sprintf(tipo,"Cliente %d:",id);
+			sprintf(hora,"Estoy esperando en la cola para ser atendido.\n");
+			pthread_mutex_lock(&fichero);
+			writeLogMessage(tipo,hora);
+			printf("%s: %s", tipo, hora);
+			pthread_mutex_unlock(&fichero);
 		}
+	}
+	while(clientes[posicionCliente].atendido==0){
 		if(checkin == 1){
 			pthread_mutex_lock(&maquinas);
 			while(maquinasCheckinVariable != 1){
@@ -299,8 +309,9 @@ void *accionesCliente(void *arg){
 			if(maquinasCheckinVariable==1){
 				sleep(6);
 				num = aleatorios(1,100);
-				pthread_mutex_lock(&maquinas);
 				maquinasCheckinVariable = 0;
+				pthread_mutex_lock(&maquinas);
+				clientes[posicionCliente].atendido == 3;
 				pthread_mutex_unlock(&maquinas);
 				if(num<30){
 					sprintf(tipo,"Cliente %d:",id);
@@ -341,6 +352,10 @@ void *accionesCliente(void *arg){
 				
 				printf(tipo,"Cliente %d:",id);
 				sprintf(hora,"El ascensor llego al limite de personas y procede a subir\n");
+				pthread_mutex_lock(&ascensor);
+				clientes[posicionCliente].atendido = 3;
+				pthread_mutex_unlock(&ascensor);
+				pthread_mutex_lock(&fichero);
 				pthread_mutex_lock(&fichero);
 				writeLogMessage(tipo, hora);
 				printf("%s: %s", tipo, hora);
@@ -352,6 +367,9 @@ void *accionesCliente(void *arg){
 				numCliAscensor++;
 				printf(tipo,"Cliente %d:",id);
 				sprintf(hora,"Esta esperando en el ascensor\n");
+				pthread_mutex_lock(&ascensor);
+				clientes[posicionCliente].atendido = 3;
+				pthread_mutex_unlock(&ascensor);
 				pthread_mutex_lock(&fichero);
 				writeLogMessage(tipo, hora);
 				printf("%s: %s", tipo, hora);

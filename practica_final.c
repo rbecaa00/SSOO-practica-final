@@ -249,7 +249,7 @@ void *accionesCliente(void *arg){
 
 	
 	
-	while(cliente[posicionCliente].atendido==0){
+	while(clientes[posicionCliente].atendido==0){
 		int num, maquinasCheckinVariable;
 		int i = 0;
 		//Probabilidad cliente
@@ -293,18 +293,19 @@ void *accionesCliente(void *arg){
 			}
 		}
 		if(checkin == 1){
-			while(maquinasCheckinVariable != NULL){
-				if(*maquinasCheckin==0){
-					maquinasCheckinVariable=0;
+			pthread_mutex_lock(&maquinas);
+			while(maquinasCheckinVariable != 1){
+				if(maquinasCheckin[i]==0){
+					maquinasCheckinVariable=1;
 				}
 				if(i==numMaquinas-1){
 					maquinasCheckinVariable == 1;
 				}
-				*maquinasCheckin++;
+				maquinasCheckin[i]++;
 				i++;
 			}
-			if(maquinasCheckinVariable==0){
-				maquinasCheckinVariable = 1;
+			pthread_mutex_unlock(&maquinas);
+			if(maquinasCheckinVariable==1){
 				sleep(6);
 				num = aleatorios(1,100);
 				maquinasCheckinVariable = 0;
@@ -316,7 +317,7 @@ void *accionesCliente(void *arg){
 					printf("%s: %s", tipo, hora);
 					pthread_mutex_unlock(&fichero);
 				}else{
-					cliente[posicionCliente].ascensor == 1;
+					clientes[posicionCliente].ascensor == 1;
 					numCliAscensor++;
 					printf(tipo,"Cliente %d:",id);
 					//Falta preguntar el que si aqui puedo poner el contador de cuanta gente se puede meter mas
@@ -336,11 +337,11 @@ void *accionesCliente(void *arg){
 		}
 		//Acabar checkin = 0
 		if(checkin == 0){
-			if(cliente[posicionCliente].atendido == 1){
+			if(clientes[posicionCliente].atendido == 1){
 				accionesRecepcionista(arg);
 		}
 		//3-6segundos hasta que baje
-		if(cliente[posicionCliente].ascensor == 1){
+		if(clientes[posicionCliente].ascensor == 1){
 			if(numCliAscensor == 5){
 				numCliAscensor = 0;
 				
@@ -367,7 +368,8 @@ void *accionesCliente(void *arg){
 
 
 		pthread_mutex_lock(&colaClientes);
-		terminarHiloPaciente(posicionCliente);
+		pthread_exit(0);
+		clientes[posicionCliente].id == 0;
 		pthread_mutex_unlock(&colaClientes);
 		pthread_exit(&cliente[posicionCliente]);
 		sleep(3);	

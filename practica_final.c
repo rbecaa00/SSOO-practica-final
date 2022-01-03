@@ -215,7 +215,8 @@ void nuevoCliente(int signal){
 
 			//Se crea un hilo nuevo donde irá el cliente nuevo
 			pthread_t aux;
-			pthread_create(&aux,NULL,accionesCliente,NULL);
+			int r1={posicionCliente};
+			pthread_create(&aux,NULL,accionesCliente,&r1);
 		}
 		//Se desbloquea el mutex
 		pthread_mutex_unlock(&colaClientes);
@@ -227,16 +228,9 @@ void *accionesCliente(void *arg){
 	char tipo[20];
 	char hora[20];
 	int id=(int*)cliente;
-	int posicionCliente;
+	int posicionCliente=((int*) arg)[0];
 	int checkin = 0;
 	
-	//Bucle para identificar el id de un cliente en especifico
-	for(int i=0; i<numClientes; i++){
-		if(cliente[i].id=id){
-			posicionCliente=i;
-		}
-	}
-
 	//sprintf sirve para crear una cadena y guardarla en una variable
 	sprintf(tipo,"Cliente %d:",id);
 	sprintf(hora,"acabo de entrar en el hotel\n");

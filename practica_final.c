@@ -210,12 +210,12 @@ void nuevoCliente(int signal){
 				case SIGUSR2:
 					clientes[posicionCliente].tipo=1;
 					break;
-
 			}
 
 			//Se crea un hilo nuevo donde irá el cliente nuevo
 			pthread_t aux;
-			pthread_create(&aux,NULL,accionesCliente,NULL);
+			int r1={posicionCliente};
+			pthread_create(&aux,NULL,accionesCliente,&r1);
 		}
 		//Se desbloquea el mutex
 		pthread_mutex_unlock(&colaClientes);
@@ -227,16 +227,9 @@ void *accionesCliente(void *arg){
 	char tipo[20];
 	char hora[20];
 	int id=(int*)cliente;
-	int posicionCliente;
+	int posicionCliente=((int*) arg)[0];
 	int checkin = 0;
 	
-	//Bucle para identificar el id de un cliente en especifico
-	for(int i=0; i<numClientes; i++){
-		if(cliente[i].id=id){
-			posicionCliente=i;
-		}
-	}
-
 	//sprintf sirve para crear una cadena y guardarla en una variable
 	sprintf(tipo,"Cliente %d:",id);
 	sprintf(hora,"acabo de entrar en el hotel\n");
@@ -244,11 +237,9 @@ void *accionesCliente(void *arg){
 	pthread_mutex_lock(&fichero);
 	writeLogMessage(tipo,hora);
 	printf("%s: %s",tipo,hora);
-	//Unluck del mutex 
+	//Unlock del mutex 
 	pthread_mutex_unlock(&fichero);
 
-	
-	
 	while(clientes[posicionCliente].atendido==0){
 		int num, maquinasCheckinVariable;
 		int i = 0;
@@ -308,7 +299,9 @@ void *accionesCliente(void *arg){
 			if(maquinasCheckinVariable==1){
 				sleep(6);
 				num = aleatorios(1,100);
+				pthread_mutex_lock(&maquinas);
 				maquinasCheckinVariable = 0;
+				pthread_mutex_unlock(&maquinas);
 				if(num<30){
 					sprintf(tipo,"Cliente %d:",id);
 					sprintf(hora,"Me fui para la habitacion por las escaleras\n");
@@ -339,6 +332,7 @@ void *accionesCliente(void *arg){
 		if(checkin == 0){
 			if(clientes[posicionCliente].atendido == 1){
 				accionesRecepcionista(arg);
+			}
 		}
 		//3-6segundos hasta que baje
 		if(clientes[posicionCliente].ascensor == 1){
@@ -397,7 +391,7 @@ void *accionesRecepcionista(void *arg){
 	//Punto 1 y 2 
 
 	while(acabar!=1){
-	pthread_mutex_lock(&colaClientes);
+		pthread_mutex_lock(&colaClientes);
 	
 	
 		for(int i=0; i<numClientes; i++){
@@ -428,15 +422,15 @@ void *accionesRecepcionista(void *arg){
 			//Se podría poner al inicio del programa, ya que es una de las primeras cosas que hace.
 
 			if(porcentaje <=80){
-			sprintf(mensaje, "El cliente %d tiene todo en regla",clientes[posicion].id);
-			sleep(aleatorios(1,4));
-			printf("%s:%s \n", identificador, mensaje);
-			pthread_mutex_lock(&fichero);
-			writeLogMessage(identificador, mensaje);
-			pthread_mutex_unlock(&fichero); 
-			pthread_mutex_lock(&colaClientes);
-			clientes[posicion].atendido ==2; //El cliente ya está atendido 
-			pthread_mutex_unlock(&colaClientes);
+				sprintf(mensaje, "El cliente %d tiene todo en regla",clientes[posicion].id);
+				sleep(aleatorios(1,4));
+				printf("%s:%s \n", identificador, mensaje);
+				pthread_mutex_lock(&fichero);
+				writeLogMessage(identificador, mensaje);
+				pthread_mutex_unlock(&fichero); 
+				pthread_mutex_lock(&colaClientes);
+				clientes[posicion].atendido ==2; //El cliente ya está atendido 
+				pthread_mutex_unlock(&colaClientes);
 
 			}else if(porcentaje >80 && porcentaje <=90){ // Un 10% de los pacientes
 
@@ -481,8 +475,6 @@ void *accionesRecepcionista(void *arg){
 			}	
 		}
 	}
-
-
 }
 
 int aleatorios(int min, int max){ //Función para calcular numeros aleatorios 
@@ -532,8 +524,7 @@ void aumentar(){
 			if (tmp_clie == NULL) {
 				printf("Hubo un error en el aumento de capacidad");
 				perror("Hubo un error en el aumento de capacidad\n");
-			}
-			else {
+			}else {
 				/* Reasignación exitosa. Asignar memoria a clientes */
 				clientes = tmp_clie;
 				numClientes += num;
@@ -555,8 +546,7 @@ void aumentar(){
 			if (tmp_maq == NULL) {
 				printf("Hubo un error en el aumento de capacidad");
 				perror("Hubo un error en el aumento de capacidad\n");
-			}
-			else {
+			}else {
 				/* Reasignación exitosa. Asignar memoria a clientes */
 				maquinasCheckin = tmp_maq;
 				numMaquinas += num;
@@ -573,9 +563,6 @@ void aumentar(){
 	}else{
 		printf("Demasiados intentos incorrectos\n");
 	}
-
-	
-
 }
 
 void writeLogMessage(char *id, char *msg){

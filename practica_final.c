@@ -408,7 +408,7 @@ void *accionesRecepcionista(void *arg){
 			}
 		}
 		if(min!=0){ //Hay clientes
-			clientes[posicion].atendido==1; //Acctualizando
+			clientes[posicion].atendido==2; //Acctualizando
 			min = 0;
 			  
 		}
@@ -433,7 +433,7 @@ void *accionesRecepcionista(void *arg){
 				writeLogMessage(identificador, mensaje);
 				pthread_mutex_unlock(&fichero); 
 				pthread_mutex_lock(&colaClientes);
-				clientes[posicion].atendido ==2; //El cliente ya está atendido 
+				clientes[posicion].atendido ==3; //El cliente ya está atendido 
 				pthread_mutex_unlock(&colaClientes);
 
 			}else if(porcentaje >80 && porcentaje <=90){ // Un 10% de los pacientes
@@ -446,7 +446,7 @@ void *accionesRecepcionista(void *arg){
 				pthread_mutex_unlock(&fichero);
 
 				pthread_mutex_lock(&colaClientes);
-				clientes[posicion].atendido == 2; //El cliente también ha sido atendido
+				clientes[posicion].atendido == 3; //El cliente también ha sido atendido
 				pthread_mutex_unlock(&colaClientes);
 
 			}else if(porcentaje >90){

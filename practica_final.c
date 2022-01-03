@@ -250,7 +250,7 @@ void *accionesCliente(void *arg){
 	
 	
 	while(cliente[posicionCliente].atendido==0){
-		int num;
+		int num, maquinasCheckinVariable;
 		//Probabilidad cliente
 		num = aleatorios(1, 100);
 		
@@ -292,11 +292,23 @@ void *accionesCliente(void *arg){
 			}
 		}
 		if(checkin == 1){
-			if(*maquinasCheckin==0){
-				maquinasCheckin = 1;
+			for(int i = 0; i<numMaquinas; i++){
+				if(*maquinasCheckin==0){
+					maquinasCheckinVariable=0;
+					/*
+					Aqui me falta el como salir de un bucle si no puedo utilizar el break
+					*/
+				}
+				if(i==numMaquinas-1){
+					maquinasCheckinVariable == 1;
+				}
+				*maquinasCheckin++;
+			}
+			if(maquinasCheckinVariable==0){
+				maquinasCheckinVariable = 1;
 				sleep(6);
 				num = aleatorios(1,100);
-				maquinasCheckin = 0;
+				maquinasCheckinVariable = 0;
 				if(num<30){
 					sprintf(tipo,"Cliente %d:",id);
 					sprintf(hora,"Me fui para la habitacion por las escaleras\n");

@@ -363,7 +363,7 @@ void *accionesCliente(void *arg){
 		}
 		//Acabar checkin = 0
 		if(checkin == 0){
-			while(aux==2){
+			while(clientes[posicionCliente].atendido==2){
 				sleep(1);
 			}
 		}

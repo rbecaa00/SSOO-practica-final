@@ -416,14 +416,14 @@ void *accionesCliente(void *arg){
 				sleep(aleatorios(3,6));
 				pthread_mutex_lock(&ascensor);
 				while(estadoAscensor == 0){
-					wait(conAscensor[0],&ascensor);
+					pthread_cond_wait(conAscensor[0],&ascensor);
 				}
 				numClientesAscensor++;
 
 				if(conAscensor==6){
 					estadoAscensor = 0;
 				}else{
-					wait(conAscensor[clientes[posicionCliente].ascensor])
+					pthread_cond_wait(conAscensor[clientes[posicionCliente].ascensor], &ascensor);
 				}
 
 				if(numClientesAscensor==1){

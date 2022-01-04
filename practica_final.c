@@ -269,7 +269,6 @@ void *accionesCliente(void *arg){
 				sprintf(hora,"Me he cansado de esperar y me voy a las maquinas de Checking\n");
 				pthread_mutex_lock(&colaClientes);
 				clientes[posicionCliente].atendido == 1;
-				aux = clientes[posicionCliente].atendido;
 				pthread_mutex_unlock(&colaClientes);
 				pthread_mutex_lock(&fichero);
 			
@@ -283,7 +282,6 @@ void *accionesCliente(void *arg){
 				pthread_mutex_lock(&colaClientes);
 				clientes[posicionCliente].atendido = 4;
 				clientes[posicionCliente].id = 0;
-				aux = clientes[posicionCliente].atendido;
 				pthread_mutex_unlock(&colaClientes);
 				pthread_mutex_lock(&fichero);
 				writeLogMessage(tipo,hora);
@@ -296,7 +294,6 @@ void *accionesCliente(void *arg){
 				pthread_mutex_lock(&colaClientes);
 				clientes[posicionCliente].atendido = 3;
 				clientes[posicionCliente].id = 0;
-				aux = clientes[posicionCliente].atendido;
 				pthread_mutex_unlock(&colaClientes);
 				pthread_mutex_lock(&fichero);
 				writeLogMessage(tipo,hora);
@@ -310,17 +307,14 @@ void *accionesCliente(void *arg){
 				printf("%s: %s", tipo, hora);
 				pthread_mutex_unlock(&fichero);
 			}
-			while(clientes[posicionCliente].atendido==2){
-				sleep(1);
-			}
+			//sleep(3);
 		}else{
+			maquinasCheckinVariable = 0;
+			i = 0;
 			pthread_mutex_lock(&maquinas);
-			while(maquinasCheckinVariable != 1){
+			while(maquinasCheckinVariable != 1&& i<numMaquinas){
 				if(maquinasCheckin[i]==0){
 					maquinasCheckinVariable=1;
-				}
-				if(i==numMaquinas-1){
-					maquinasCheckinVariable = 2;
 				}
 				maquinasCheckin[i]++;
 				i++;
@@ -328,32 +322,15 @@ void *accionesCliente(void *arg){
 
 			pthread_mutex_unlock(&maquinas);
 			if(maquinasCheckinVariable==1){
-					sleep(6);
-					num = aleatorios(1,100);
-					maquinasCheckinVariable = 0;
-					pthread_mutex_lock(&colaClientes);
-					clientes[posicionCliente].atendido == 3;
-					aux = clientes[posicionCliente].atendido;
-					pthread_mutex_unlock(&colaClientes);
+				sleep(6);
+				pthread_mutex_lock(&maquinas);
+				maquinasCheckin[i] = 0;
+				pthread_mutex_unlock(&maquinas);
+				pthread_mutex_lock(&colaClientes);
+				clientes[posicionCliente].atendido == 3;
+				pthread_mutex_unlock(&colaClientes);
 				
-				if(num<30){
-					sprintf(tipo,"Cliente %d:",id);
-					sprintf(hora,"Me fui para la habitacion por las escaleras\n");
-					pthread_mutex_lock(&fichero);
-					writeLogMessage(tipo, hora);
-					printf("%s: %s", tipo, hora);
-					pthread_mutex_unlock(&fichero);
-				}else{
-					pthread_mutex_lock(&ascensor);
-					clientes[posicionCliente].ascensor == 1;
-					pthread_mutex_unlock(&ascensor);
-					printf(tipo,"Cliente %d:",id);
-					sprintf(hora,"Esta en el ascensor esperando\n");
-					pthread_mutex_lock(&fichero);
-					writeLogMessage(tipo, hora);
-					printf("%s: %s", tipo, hora);
-					pthread_mutex_unlock(&fichero);
-					}
+				
 			}else{
 				sleep(3);
 				num = aleatorios(1,100);
@@ -364,93 +341,109 @@ void *accionesCliente(void *arg){
 		}
 			
 		
-		
+		pthread_mutex_lock(&colaClientes);
 		aux = clientes[posicionCliente].atendido;
-		clientes[posicionCliente].atendido = aux;
+		pthread_mutex_unlock(&colaClientes);
 	}
-
+	num = aleatorios(1,100);
+	if(num<30){
+		sprintf(tipo,"Cliente %d:",id);
+		sprintf(hora,"Me fui para la habitacion por las escaleras\n");
+		pthread_mutex_lock(&fichero);
+		writeLogMessage(tipo, hora);
+		printf("%s: %s", tipo, hora);
+		pthread_mutex_unlock(&fichero);
+	}else{
+		pthread_mutex_lock(&ascensor);
+		clientes[posicionCliente].ascensor == 1;
+		pthread_mutex_unlock(&ascensor);
+		printf(tipo,"Cliente %d:",id);
+		sprintf(hora,"Esta en el ascensor esperando\n");
+		pthread_mutex_lock(&fichero);
+		writeLogMessage(tipo, hora);
+		printf("%s: %s", tipo, hora);
+		pthread_mutex_unlock(&fichero);
+	}
 		
-		//3-6segundos hasta que baje
-		if(clientes[posicionCliente].ascensor == 1){
+	if(clientes[posicionCliente].ascensor == 1){
 			
-			do{
-			
-				if(numClientesAscensor[1] != 5 && numClientesAscensor[0]==0){
+		do{
+		
+			if(numClientesAscensor[1] != 5 && numClientesAscensor[0]==0){
+				pthread_mutex_lock(&ascensor);
+				numClientesAscensor[1]++;
+				pthread_mutex_unlock(&ascensor);
+				printf(tipo,"Cliente %d:",id);
+				sprintf(hora,"Esta esperando en el ascensor\n");
+				pthread_mutex_lock(&colaClientes);
+				clientes[posicionCliente].atendido = 3;
+				pthread_mutex_unlock(&colaClientes);
+				pthread_mutex_lock(&fichero);
+				writeLogMessage(tipo, hora);
+				printf("%s: %s", tipo, hora);
+				pthread_mutex_unlock(&fichero);
+
+				if(numClientesAscensor[1] == 5 && numClientesAscensor[0] == 0){
 					pthread_mutex_lock(&ascensor);
 					numClientesAscensor[1]++;
 					pthread_mutex_unlock(&ascensor);
+
 					printf(tipo,"Cliente %d:",id);
-					sprintf(hora,"Esta esperando en el ascensor\n");
-					pthread_mutex_lock(&colaClientes);
-					clientes[posicionCliente].atendido = 3;
-					pthread_mutex_unlock(&colaClientes);
+					sprintf(hora,"El ascensor llego al limite de personas y procede a subir\n");
 					pthread_mutex_lock(&fichero);
 					writeLogMessage(tipo, hora);
 					printf("%s: %s", tipo, hora);
 					pthread_mutex_unlock(&fichero);
-
-					if(numClientesAscensor[1] == 5 && numClientesAscensor[0] == 0){
+					pthread_mutex_lock(&ascensor);
+					numClientesAscensor[0] = 1;
+					pthread_mutex_unlock(&ascensor);
+					sleep(aleatorios(3,6));
+					while(numClientesAscensor[0] == 1){
 						pthread_mutex_lock(&ascensor);
-						numClientesAscensor[1]++;
 						pthread_mutex_unlock(&ascensor);
-
-						printf(tipo,"Cliente %d:",id);
-						sprintf(hora,"El ascensor llego al limite de personas y procede a subir\n");
-						pthread_mutex_lock(&fichero);
-						writeLogMessage(tipo, hora);
-						printf("%s: %s", tipo, hora);
-						pthread_mutex_unlock(&fichero);
 						pthread_mutex_lock(&ascensor);
-						numClientesAscensor[0] = 1;
+						numClientesAscensor[1]--;
 						pthread_mutex_unlock(&ascensor);
-						sleep(aleatorios(3,6));
-						while(numClientesAscensor[0] == 1){
+						if(numClientesAscensor[1] == 0){
 							pthread_mutex_lock(&ascensor);
+							numClientesAscensor[0] == 2;
 							pthread_mutex_unlock(&ascensor);
-							pthread_mutex_lock(&ascensor);
-							numClientesAscensor[1]--;
-							pthread_mutex_unlock(&ascensor);
-							if(numClientesAscensor[1] == 0){
-								pthread_mutex_lock(&ascensor);
-								numClientesAscensor[0] == 2;
-								pthread_mutex_unlock(&ascensor);
-							}
 						}
-						//Puse de nuevo el aleatorio del tiempo subido por un poco amor al arte
-						sleep(aleatorios(3,6));
-						pthread_mutex_lock(&ascensor);
-						numClientesAscensor[0] == 0;
-						pthread_mutex_unlock(&ascensor);
-				
-
 					}
+					//Puse de nuevo el aleatorio del tiempo subido por un poco amor al arte
+					sleep(aleatorios(3,6));
+					pthread_mutex_lock(&ascensor);
+					numClientesAscensor[0] == 0;
+					pthread_mutex_unlock(&ascensor);
+			
+
+				}
 					
-					if(numClientesAscensor[0]!=0){
-						while(numClientesAscensor[0]!=0){
-							sleep(3);
-						}
-				
+				if(numClientesAscensor[0]!=0){
+					while(numClientesAscensor[0]!=0){
+						sleep(3);
 					}
-					waiting= 0;
+				
 				}
-				if(waiting=1){
-					sleep(2);
-				}
-
-			}while(waiting==1);
-		}
-		while(clientes[posicionCliente].ascensor == 0 ){
-			sleep(1);
-		}
-
-
-		pthread_mutex_lock(&colaClientes);
-		pthread_exit(0);
-		clientes[posicionCliente].id == 0;
-		pthread_mutex_unlock(&colaClientes);
-		pthread_exit(&clientes[posicionCliente]);
-		sleep(3);	
+				waiting= 0;
+			}
+			if(waiting=1){
+				sleep(2);
+			}
+		}while(waiting==1);
 	}
+	while(clientes[posicionCliente].ascensor == 0 ){
+		sleep(1);
+	}
+
+
+	pthread_mutex_lock(&colaClientes);
+	pthread_exit(0);
+	clientes[posicionCliente].id == 0;
+	pthread_mutex_unlock(&colaClientes);
+	pthread_exit(&clientes[posicionCliente]);
+	sleep(3);	
+	
 
 	
 	

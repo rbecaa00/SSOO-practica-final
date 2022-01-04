@@ -22,6 +22,7 @@ struct cliente{
 
 int numClientesAscensor;
 pthread_cond_t conAscensor[6];
+int estadoAscensor;
 
 struct cliente *clientes;
 int *maquinasCheckin;
@@ -127,6 +128,7 @@ int main(int argc, char *argv[]){
 		numMaquinas = 5;
 	}
 	
+	estadoAscensor = 0;
 	contClientes = 0;
 	acabar = 0;
 
@@ -412,18 +414,26 @@ void *accionesCliente(void *arg){
 				numClientesAscensor[0] = 1;
 				pthread_mutex_unlock(&ascensor);
 				sleep(aleatorios(3,6));
-				while(numClientesAscensor[0] == 1){
-					pthread_mutex_lock(&ascensor);
-					pthread_mutex_unlock(&ascensor);
-					pthread_mutex_lock(&ascensor);
-					numClientesAscensor--;
-					pthread_mutex_unlock(&ascensor);
-					if(numClientesAscensor == 0){
-						pthread_mutex_lock(&ascensor);
-						numClientesAscensor[0] == 2;
-						pthread_mutex_unlock(&ascensor);
-					}
+				pthread_mutex_lock(&ascensor);
+				while(estadoAscensor == 0){
+					wait(conAscensor[0],&ascensor);
 				}
+				numClientesAscensor++;
+
+				if(conAscensor==6){
+					estadoAscensor = 0;
+				}else{
+					wait(conAscensor[clientes[posicionCliente].ascensor])
+				}
+
+				if(numClientesAscensor==1){
+					estadoAscensor = 1;
+				}
+				numClientesAscensor--;
+				pthread_mutex_unlock(&ascensor);
+				signal(conAscensor[clientes[posicionCliente].ascensor-1]);
+				exit(0);
+				
 				//Puse de nuevo el aleatorio del tiempo subido por un poco amor al arte
 				sleep(aleatorios(3,6));
 				pthread_mutex_lock(&ascensor);

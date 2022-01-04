@@ -411,7 +411,7 @@ void *accionesCliente(void *arg){
 				printf("%s: %s", tipo, hora);
 				pthread_mutex_unlock(&fichero);
 				pthread_mutex_lock(&ascensor);
-				numClientesAscensor[0] = 1;
+				estadoAscensor = 1;
 				pthread_mutex_unlock(&ascensor);
 				sleep(aleatorios(3,6));
 				pthread_mutex_lock(&ascensor);
@@ -431,13 +431,15 @@ void *accionesCliente(void *arg){
 				}
 				numClientesAscensor--;
 				pthread_mutex_unlock(&ascensor);
+				pthread_mutex_lock(&colaClientes);
 				pthread_cond_signal(&conAscensor[clientes[posicionCliente].ascensor-1]);
+				pthread_mutex_unlock(&colaClientes);
 				exit(0);
 				
 				//Puse de nuevo el aleatorio del tiempo subido por un poco amor al arte
 				sleep(aleatorios(3,6));
 				pthread_mutex_lock(&ascensor);
-				numClientesAscensor[0] == 0;
+				estadoAscensor == 0;
 				pthread_mutex_unlock(&ascensor);			
 
 			}else{
@@ -455,7 +457,7 @@ void *accionesCliente(void *arg){
 				pthread_mutex_unlock(&fichero);
 				bucle = 1;
 				while(bucle==1){
-					if(numClientesAscensor[0]==2){
+					if(estadoAscensor==2){
 						thread_mutex_lock(&colaClientes);
 						clientes[posicionCliente].id == 0;
 						pthread_mutex_unlock(&colaClientes);
@@ -465,26 +467,23 @@ void *accionesCliente(void *arg){
 				}
 			}
 					
-				if(numClientesAscensor[0]!=0){
-					while(numClientesAscensor[0]!=0){
-						sleep(3);
-					}
-				
+			if(estadoAscensor!=0){
+				while(estadoAscensor!=0){
+					sleep(3);
 				}
+			
+			
 				waiting= 0;
 			}
-			if(waiting=1){
+			if(waiting==1){
 				sleep(2);
 			}
 		}while(waiting==1);
 	}
-	while(clientes[posicionCliente].ascensor == 0 ){
-		sleep(1);
-	}
 
 
 	pthread_mutex_lock(&colaClientes);
-	clientes[posicionCliente].id == 0;
+	clientes[posicionCliente].id = 0;
 	pthread_mutex_unlock(&colaClientes);
 	pthread_exit(0);	
 	

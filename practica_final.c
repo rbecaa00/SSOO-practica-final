@@ -154,7 +154,9 @@ int main(int argc, char *argv[]){
 	}
 
 	for(int x = 0; x<= 5;x++){
-		if(pthread_cond_init(&conAscensor[x], NULL)!=0)exit(-1);
+		if(pthread_cond_init(&conAscensor[x], NULL)!=0){
+			exit(-1);
+		}
 	}
 
 	pthread_t recepcionista_1, recepcionista_2, recepcionista_3;

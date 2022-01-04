@@ -232,6 +232,7 @@ void *accionesCliente(void *arg){
 	int id=(int*)cliente;
 	int posicionCliente=((int*) arg)[0];
 	int checkin = 0;
+	int waiting = 1;
 	numClientesAscensor[1] = numCliAscensor;
 	if(numClientesAscensor[0]==NULL){
 		numClientesAscensor[0]=0;
@@ -257,7 +258,7 @@ void *accionesCliente(void *arg){
 	if(num<10){
 		checkin = 1;
 	}else{
-		while(clientes[posicionCliente].atendido==0){
+		while(clientes[posicionCliente].atendido<2){
 			num = aleatorios(1, 100);
 			if(num<=20){
 				checkin = 1;
@@ -300,100 +301,73 @@ void *accionesCliente(void *arg){
 				printf("%s: %s", tipo, hora);
 				pthread_mutex_unlock(&fichero);
 			}
-		
-	
-			if(checkin == 1){
-				pthread_mutex_lock(&maquinas);
-				while(maquinasCheckinVariable != 1){
-					if(maquinasCheckin[i]==0){
-						maquinasCheckinVariable=1;
-					}
-					if(i==numMaquinas-1){
-						maquinasCheckinVariable == 1;
-					}
-					maquinasCheckin[i]++;
-					i++;
+			pthread_mutex_lock(&maquinas);
+			while(maquinasCheckinVariable != 1){
+				if(maquinasCheckin[i]==0){
+					maquinasCheckinVariable=1;
 				}
-				pthread_mutex_unlock(&maquinas);
-				if(maquinasCheckinVariable==1){
-					sleep(6);
-					num = aleatorios(1,100);
-					maquinasCheckinVariable = 0;
-					pthread_mutex_lock(&maquinas);
-					clientes[posicionCliente].atendido == 3;
-					pthread_mutex_unlock(&maquinas);
-					if(num<30){
-						sprintf(tipo,"Cliente %d:",id);
-						sprintf(hora,"Me fui para la habitacion por las escaleras\n");
-						pthread_mutex_lock(&fichero);
-						writeLogMessage(tipo, hora);
-						printf("%s: %s", tipo, hora);
-						pthread_mutex_unlock(&fichero);
-					}else{
-						clientes[posicionCliente].ascensor == 1;
-						numCliAscensor++;
-						printf(tipo,"Cliente %d:",id);
-						sprintf(hora,"Esta en el ascensor esperando\n");
-						pthread_mutex_lock(&fichero);
-						writeLogMessage(tipo, hora);
-						printf("%s: %s", tipo, hora);
-						pthread_mutex_unlock(&fichero);
-					}
-				}else{
-					sleep(3);
-					num = aleatorios(1,100);
-					if(num < 50){
-						checkin = 0;
-					}
+				if(i==numMaquinas-1){
+					maquinasCheckinVariable = 2;
 				}
+				maquinasCheckin[i]++;
+				i++;
 			}
-			//Acabar checkin = 0
-			if(checkin == 0){
-				if(clientes[posicionCliente].atendido == 1){
-					accionesRecepcionista(arg);
-				}
-			}
-			//3-6segundos hasta que baje
-			if(clientes[posicionCliente].ascensor == 1){
-				if(numClientesAscensor[1] == 5 && numClientesAscensor[0] == 0){
-					pthread_mutex_lock(&ascensor);
-					numCliAscensor++;
-					pthread_mutex_unlock(&ascensor);
 
-					printf(tipo,"Cliente %d:",id);
-					sprintf(hora,"El ascensor llego al limite de personas y procede a subir\n");
+			pthread_mutex_unlock(&maquinas);
+			checkin = aleatorios(1,2);
+		}
+
+		if(checkin == 1){
+			
+			if(maquinasCheckinVariable==1){
+				sleep(6);
+				num = aleatorios(1,100);
+				maquinasCheckinVariable = 0;
+				pthread_mutex_lock(&ascensor);
+				clientes[posicionCliente].atendido == 3;
+				pthread_mutex_unlock(&ascensor);
+				if(num<30){
+					sprintf(tipo,"Cliente %d:",id);
+					sprintf(hora,"Me fui para la habitacion por las escaleras\n");
 					pthread_mutex_lock(&fichero);
 					writeLogMessage(tipo, hora);
 					printf("%s: %s", tipo, hora);
 					pthread_mutex_unlock(&fichero);
+				}else{
 					pthread_mutex_lock(&ascensor);
-					numClientesAscensor[0] = 1;
+					clientes[posicionCliente].ascensor == 1;
 					pthread_mutex_unlock(&ascensor);
-					sleep(aleatorios(3,6));
-					while(numClientesAscensor[0] == 1){
-						pthread_mutex_lock(&ascensor);
-						//Aqui no se como ir cambiando el id uno a uno, osea, no entiendo
-						pthread_mutex_unlock(&ascensor);
-						pthread_mutex_lock(&ascensor);
-						numCliAscensor--;
-						pthread_mutex_unlock(&ascensor);
-						if(numCliAscensor == 0){
-							pthread_mutex_lock(&ascensor);
-							numClientesAscensor[0] == 2;
-							pthread_mutex_unlock(&ascensor);
-						}
-					}
-					//Puse de nuevo el aleatorio del tiempo subido por un poco amor al arte
-					sleep(aleatorios(3,6));
-					pthread_mutex_lock(&ascensor);
-					numClientesAscensor[0] == 0;
-					pthread_mutex_unlock(&ascensor);
-					
-
+					printf(tipo,"Cliente %d:",id);
+					sprintf(hora,"Esta en el ascensor esperando\n");
+					pthread_mutex_lock(&fichero);
+					writeLogMessage(tipo, hora);
+					printf("%s: %s", tipo, hora);
+					pthread_mutex_unlock(&fichero);
 				}
-				if(numCliAscensor != 5){
+			}else{
+				sleep(3);
+				num = aleatorios(1,100);
+				if(num < 50){
+					checkin = 0;
+				}
+			}
+		}
+		//Acabar checkin = 0
+		if(checkin == 0){
+			if(clientes[posicionCliente].atendido == 2){
+				while(clientes[posicionCliente].atendido==2){
+					sleep(1);
+				}
+			}
+		}
+		//3-6segundos hasta que baje
+		if(clientes[posicionCliente].ascensor == 1){
+			
+			do{
+			
+				if(numClientesAscensor[1] != 5 && numClientesAscensor[0]==0){
 					pthread_mutex_lock(&ascensor);
-					numCliAscensor++;
+					numClientesAscensor[1]++;
 					pthread_mutex_unlock(&ascensor);
 					printf(tipo,"Cliente %d:",id);
 					sprintf(hora,"Esta esperando en el ascensor\n");
@@ -404,29 +378,71 @@ void *accionesCliente(void *arg){
 					writeLogMessage(tipo, hora);
 					printf("%s: %s", tipo, hora);
 					pthread_mutex_unlock(&fichero);
+
+					if(numClientesAscensor[1] == 5 && numClientesAscensor[0] == 0){
+						pthread_mutex_lock(&ascensor);
+						numClientesAscensor[1]++;
+						pthread_mutex_unlock(&ascensor);
+
+						printf(tipo,"Cliente %d:",id);
+						sprintf(hora,"El ascensor llego al limite de personas y procede a subir\n");
+						pthread_mutex_lock(&fichero);
+						writeLogMessage(tipo, hora);
+						printf("%s: %s", tipo, hora);
+						pthread_mutex_unlock(&fichero);
+						pthread_mutex_lock(&ascensor);
+						numClientesAscensor[0] = 1;
+						pthread_mutex_unlock(&ascensor);
+						sleep(aleatorios(3,6));
+						while(numClientesAscensor[0] == 1){
+							pthread_mutex_lock(&ascensor);
+							pthread_mutex_unlock(&ascensor);
+							pthread_mutex_lock(&ascensor);
+							numClientesAscensor[1]--;
+							pthread_mutex_unlock(&ascensor);
+							if(numClientesAscensor[1] == 0){
+								pthread_mutex_lock(&ascensor);
+								numClientesAscensor[0] == 2;
+								pthread_mutex_unlock(&ascensor);
+							}
+						}
+						//Puse de nuevo el aleatorio del tiempo subido por un poco amor al arte
+						sleep(aleatorios(3,6));
+						pthread_mutex_lock(&ascensor);
+						numClientesAscensor[0] == 0;
+						pthread_mutex_unlock(&ascensor);
+				
+
+					}
 					
 					if(numClientesAscensor[0]!=0){
 						while(numClientesAscensor[0]!=0){
 							sleep(3);
 						}
+				
 					}
+					waiting= 0;
 				}
-			}
+				if(waiting=1){
+					sleep(2);
+				}
 
-			while(cliente[posicionCliente].ascensor == 0 ){
-				sleep(1);
-			}
-
-
-			pthread_mutex_lock(&colaClientes);
-			pthread_exit(0);
-			clientes[posicionCliente].id == 0;
-			pthread_mutex_unlock(&colaClientes);
-			pthread_exit(&cliente[posicionCliente]);
-			sleep(3);	
+			}while(waiting==1);
+		}
+		while(cliente[posicionCliente].ascensor == 0 ){
+			sleep(1);
 		}
 
+
+		pthread_mutex_lock(&colaClientes);
+		pthread_exit(0);
+		clientes[posicionCliente].id == 0;
+		pthread_mutex_unlock(&colaClientes);
+		pthread_exit(&cliente[posicionCliente]);
+		sleep(3);	
 	}
+
+	
 	
 }
 //Hilo

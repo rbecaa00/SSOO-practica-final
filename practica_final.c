@@ -27,7 +27,6 @@ int *maquinasCheckin;
 
 int numClientes;
 int contClientes;
-int numCliAscensor;
 int numMaquinas;
 int acabar;
 
@@ -58,6 +57,8 @@ int main(int argc, char *argv[]){
 
 	// sprintf(ids, "%d", getpid());
 	writeLogMessage("Main", "Inicio programa");
+
+	numClientesAscensor[1] = 0;
 
 	/**
 	 * Montado de señales
@@ -126,7 +127,6 @@ int main(int argc, char *argv[]){
 	}
 	
 	contClientes = 0;
-	numCliAscensor = 0;
 	acabar = 0;
 
 	clientes = (struct cliente *)malloc(sizeof(struct cliente) * numClientes);
@@ -232,11 +232,10 @@ void *accionesCliente(void *arg){
 	int posicionCliente=((int*) arg)[0];
 	int checkin = 0;
 	int waiting = 1;
-	numClientesAscensor[1] = numCliAscensor;
 	if(numClientesAscensor[0]==NULL){
 		numClientesAscensor[0]=0;
 	}
-	int aux;
+	int aux=clientes[posicionCliente].atendido;
 
 	pthread_mutex_lock(&colaClientes);
 	int id = clientes[posicionCliente].id;
@@ -331,9 +330,9 @@ void *accionesCliente(void *arg){
 				sleep(6);
 				num = aleatorios(1,100);
 				maquinasCheckinVariable = 0;
-				pthread_mutex_lock(&ascensor);
+				pthread_mutex_lock(&colaClientes);
 				clientes[posicionCliente].atendido == 3;
-				pthread_mutex_unlock(&ascensor);
+				pthread_mutex_unlock(&colaClientes);
 				aux = clientes[posicionCliente].atendido;
 				if(num<30){
 					sprintf(tipo,"Cliente %d:",id);
@@ -364,10 +363,8 @@ void *accionesCliente(void *arg){
 		}
 		//Acabar checkin = 0
 		if(checkin == 0){
-			if(clientes[posicionCliente].atendido == 2){
-				while(clientes[posicionCliente].atendido==2){
-					sleep(1);
-				}
+			while(aux==2){
+				sleep(1);
 			}
 		}
 	}

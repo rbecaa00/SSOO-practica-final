@@ -229,7 +229,6 @@ void nuevoCliente(int signal){
 void *accionesCliente(void *arg){
 	char tipo[20];
 	char hora[20];
-	int id=(int*)cliente;
 	int posicionCliente=((int*) arg)[0];
 	int checkin = 0;
 	int waiting = 1;
@@ -238,6 +237,9 @@ void *accionesCliente(void *arg){
 		numClientesAscensor[0]=0;
 	}
 
+	pthread_mutex_lock(&colaClientes);
+	int id = clientes[posicionCliente].id;
+	pthread_mutex_unlock(&colaClientes);
 	
 	//sprintf sirve para crear una cadena y guardarla en una variable
 	sprintf(tipo,"Cliente %d:",id);

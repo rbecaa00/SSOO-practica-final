@@ -20,7 +20,8 @@ struct cliente{
 };
 
 
-int numClientesAscensor[2];
+int numClientesAscensor;
+pthread_cond_t conAscensor[6];
 
 struct cliente *clientes;
 int *maquinasCheckin;
@@ -58,7 +59,7 @@ int main(int argc, char *argv[]){
 	// sprintf(ids, "%d", getpid());
 	writeLogMessage("Main", "Inicio programa");
 
-	numClientesAscensor[1] = 0;
+	numClientesAscensor = 0;
 
 	/**
 	 * Montado de señales
@@ -152,6 +153,10 @@ int main(int argc, char *argv[]){
 		exit(-1);
 	}
 
+	for(int x = 0; x<= 5;x++){
+		if(pthread_cond_init(&conAscensor[x], NULL)!=0)exit(-1);
+	}
+
 	pthread_t recepcionista_1, recepcionista_2, recepcionista_3;
 	int r1[] = {0, 1};
 	int r2[] = {0, 2};
@@ -232,9 +237,7 @@ void *accionesCliente(void *arg){
 	int posicionCliente=((int*) arg)[0];
 	int checkin = 0;
 	int waiting = 1;
-	if(numClientesAscensor[0]==NULL){
-		numClientesAscensor[0]=0;
-	}
+	int bucle = 0;
 	
 	pthread_mutex_lock(&colaClientes);
 	int id = clientes[posicionCliente].id;
@@ -391,9 +394,43 @@ void *accionesCliente(void *arg){
 			
 		do{
 		
-			if(numClientesAscensor[1] != 5 && numClientesAscensor[0]==0){
+			if(numClientesAscensor == 5){
+				
 				pthread_mutex_lock(&ascensor);
-				numClientesAscensor[1]++;
+				numClientesAscensor++;
+				pthread_mutex_unlock(&ascensor);
+
+				printf(tipo,"Cliente %d:",id);
+				sprintf(hora,"El ascensor llego al limite de personas y procede a subir\n");
+				pthread_mutex_lock(&fichero);
+				writeLogMessage(tipo, hora);
+				printf("%s: %s", tipo, hora);
+				pthread_mutex_unlock(&fichero);
+				pthread_mutex_lock(&ascensor);
+				numClientesAscensor[0] = 1;
+				pthread_mutex_unlock(&ascensor);
+				sleep(aleatorios(3,6));
+				while(numClientesAscensor[0] == 1){
+					pthread_mutex_lock(&ascensor);
+					pthread_mutex_unlock(&ascensor);
+					pthread_mutex_lock(&ascensor);
+					numClientesAscensor--;
+					pthread_mutex_unlock(&ascensor);
+					if(numClientesAscensor == 0){
+						pthread_mutex_lock(&ascensor);
+						numClientesAscensor[0] == 2;
+						pthread_mutex_unlock(&ascensor);
+					}
+				}
+				//Puse de nuevo el aleatorio del tiempo subido por un poco amor al arte
+				sleep(aleatorios(3,6));
+				pthread_mutex_lock(&ascensor);
+				numClientesAscensor[0] == 0;
+				pthread_mutex_unlock(&ascensor);			
+
+			}else{
+				pthread_mutex_lock(&ascensor);
+				numClientesAscensor++;
 				pthread_mutex_unlock(&ascensor);
 				printf(tipo,"Cliente %d:",id);
 				sprintf(hora,"Esta esperando en el ascensor\n");
@@ -404,42 +441,17 @@ void *accionesCliente(void *arg){
 				writeLogMessage(tipo, hora);
 				printf("%s: %s", tipo, hora);
 				pthread_mutex_unlock(&fichero);
-
-				if(numClientesAscensor[1] == 5 && numClientesAscensor[0] == 0){
-					pthread_mutex_lock(&ascensor);
-					numClientesAscensor[1]++;
-					pthread_mutex_unlock(&ascensor);
-
-					printf(tipo,"Cliente %d:",id);
-					sprintf(hora,"El ascensor llego al limite de personas y procede a subir\n");
-					pthread_mutex_lock(&fichero);
-					writeLogMessage(tipo, hora);
-					printf("%s: %s", tipo, hora);
-					pthread_mutex_unlock(&fichero);
-					pthread_mutex_lock(&ascensor);
-					numClientesAscensor[0] = 1;
-					pthread_mutex_unlock(&ascensor);
-					sleep(aleatorios(3,6));
-					while(numClientesAscensor[0] == 1){
-						pthread_mutex_lock(&ascensor);
-						pthread_mutex_unlock(&ascensor);
-						pthread_mutex_lock(&ascensor);
-						numClientesAscensor[1]--;
-						pthread_mutex_unlock(&ascensor);
-						if(numClientesAscensor[1] == 0){
-							pthread_mutex_lock(&ascensor);
-							numClientesAscensor[0] == 2;
-							pthread_mutex_unlock(&ascensor);
-						}
+				bucle = 1;
+				while(bucle==1){
+					if(numClientesAscensor[0]==2){
+						thread_mutex_lock(&colaClientes);
+						clientes[posicionCliente].id == 0;
+						pthread_mutex_unlock(&colaClientes);
+						pthread_exit(0);
 					}
-					//Puse de nuevo el aleatorio del tiempo subido por un poco amor al arte
-					sleep(aleatorios(3,6));
-					pthread_mutex_lock(&ascensor);
-					numClientesAscensor[0] == 0;
-					pthread_mutex_unlock(&ascensor);
-			
-
+					sleep(1);
 				}
+			}
 					
 				if(numClientesAscensor[0]!=0){
 					while(numClientesAscensor[0]!=0){

@@ -416,14 +416,14 @@ void *accionesCliente(void *arg){
 				sleep(aleatorios(3,6));
 				pthread_mutex_lock(&ascensor);
 				while(estadoAscensor == 0){
-					pthread_cond_wait(conAscensor[0],&ascensor);
+					pthread_cond_wait(&conAscensor[0],&ascensor);
 				}
 				numClientesAscensor++;
 
 				if(conAscensor==6){
 					estadoAscensor = 0;
 				}else{
-					pthread_cond_wait(conAscensor[clientes[posicionCliente].ascensor], &ascensor);
+					pthread_cond_wait(&conAscensor[clientes[posicionCliente].ascensor], &ascensor);
 				}
 
 				if(numClientesAscensor==1){
@@ -431,7 +431,7 @@ void *accionesCliente(void *arg){
 				}
 				numClientesAscensor--;
 				pthread_mutex_unlock(&ascensor);
-				signal(conAscensor[clientes[posicionCliente].ascensor-1]);
+				pthread_cond_signal(&conAscensor[clientes[posicionCliente].ascensor-1]);
 				exit(0);
 				
 				//Puse de nuevo el aleatorio del tiempo subido por un poco amor al arte

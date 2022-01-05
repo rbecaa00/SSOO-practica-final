@@ -316,6 +316,7 @@ void* accionesCliente(void* arg)
                 writeLogMessage(identificador, mensaje);
                 printf("%s: %s\n", identificador, mensaje);
                 pthread_mutex_unlock(&fichero);
+                
             } else if (num > 30 && num <= 35) {
                 // sprintf(identificador,"Cliente %d:",id);
                 sprintf(mensaje, "He ido al baño y he perdido el turno asi que me voy");
@@ -379,7 +380,11 @@ void* accionesCliente(void* arg)
 
             if (maquinasCheckinVariable == 1) {
                 i--;
-                printf("Haciendo chein de cliente %d en maquina %d\n",id,i);
+                printf("Haciendo checkin de cliente %d en maquina %d\n",id,i);
+
+                pthread_mutex_lock(&colaClientes);
+                clientes[posicionCliente].atendido = 2;
+                pthread_mutex_unlock(&colaClientes);
 
                 sleep(6);
 
@@ -633,6 +638,7 @@ void* accionesRecepcionista(void* arg)
         pthread_mutex_lock(&colaClientes);
 
         min = contClientes+1;
+        posicion = -1;
 
         for (int i = 0; i < numClientes; i++) {
             if (recepcionista[0] == clientes[i].tipo && clientes[i].atendido == 0) {
@@ -696,7 +702,7 @@ void* accionesRecepcionista(void* arg)
                 sleep(aleatorios(6, 10));
                 printf("%s : %s \n", identificador, mensaje);
                 pthread_mutex_lock(&colaClientes);
-                clientes[posicion].atendido == 0; // Al no tener el pasaporte vacunal debe abandonar el hotel.
+                clientes[posicion].atendido = 0; // Al no tener el pasaporte vacunal debe abandonar el hotel.
                 pthread_mutex_unlock(&colaClientes);
             }
 

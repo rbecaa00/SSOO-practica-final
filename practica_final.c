@@ -240,7 +240,7 @@ void nuevoCliente(int signal)
                 clientes[posicionCliente].tipo = 0;
                 break;
             case SIGUSR2:
-            printf("Nuevo cliente VIP");
+            printf("Nuevo cliente VIP\n");
                 clientes[posicionCliente].tipo = 1;
                 break;
             }

@@ -489,6 +489,7 @@ void* accionesCliente(void* arg)
         pthread_mutex_lock(&fichero);
         writeLogMessage(identificador, mensaje);
         printf("%s: %s\n", identificador, mensaje);
+        pthread_mutex_unlock(&fichero);
 
         pthread_mutex_lock(&ascensor);
 

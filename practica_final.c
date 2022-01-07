@@ -202,7 +202,7 @@ int main(int argc, char* argv[])
 
 void nuevoCliente(int signal)
 {
-    printf("Nuevo cliente\n");
+    printf("Llega un cliente\n");
     int fin;
 
     pthread_mutex_lock(&finalizar);
@@ -210,6 +210,7 @@ void nuevoCliente(int signal)
     pthread_mutex_unlock(&finalizar);
 
     if (fin == 0) {
+        printf("Hay nuevo cliente\n")
         int posicionCliente = -1;
         // Se bloquea el mutex
         pthread_mutex_lock(&colaClientes);
@@ -240,7 +241,7 @@ void nuevoCliente(int signal)
                 clientes[posicionCliente].tipo = 0;
                 break;
             case SIGUSR2:
-            printf("Nuevo cliente VIP");
+            printf("Nuevo cliente VIP\n");
                 clientes[posicionCliente].tipo = 1;
                 break;
             }
@@ -464,9 +465,11 @@ void* accionesCliente(void* arg)
 
         pthread_mutex_lock(&ascensor);
 
-        while (waiting == 0 || numClientesAscensor >= 6) {
+        espAs++;
 
-            espAs++;
+        while (!estadoAscensor || numClientesAscensor >= 6) {
+
+            
 
             // printf(identificador, "Cliente %d:", id);
             sprintf(mensaje, "Esta esperando por el ascensor");
@@ -475,7 +478,10 @@ void* accionesCliente(void* arg)
             printf("%s: %s\n", identificador, mensaje);
             pthread_mutex_unlock(&fichero);
 
-            pthread_cond_wait(&conAscensor[0],&ascensor);
+            //pthread_cond_wait(&conAscensor[0],&ascensor);
+
+            sleep(3);
+
         }
 
         espAs--;
@@ -489,16 +495,19 @@ void* accionesCliente(void* arg)
         pthread_mutex_lock(&fichero);
         writeLogMessage(identificador, mensaje);
         printf("%s: %s\n", identificador, mensaje);
+        pthread_mutex_unlock(&fichero);
 
         pthread_mutex_lock(&ascensor);
 
         if ((fin && espAs == 0) || posAs >= 6) {
 
-            waiting = 0;
+            estadoAscensor = 0;
 
             pthread_mutex_unlock(&ascensor);
             sleep(6);
             pthread_mutex_lock(&ascensor);
+
+            pthread_cond_signal(&conAscensor[]);
 
         } else {
             pthread_cond_wait(&conAscensor[posAs], &ascensor);
@@ -509,7 +518,7 @@ void* accionesCliente(void* arg)
         pthread_cond_signal(&conAscensor[numClientesAscensor]);
 
         if (numClientesAscensor == 0) {
-            waiting = 1;
+            estadoAscensor = 1;
         }
 
         pthread_mutex_unlock(&ascensor);
@@ -518,7 +527,7 @@ void* accionesCliente(void* arg)
         sprintf(mensaje, "Deja el ascensor");
         pthread_mutex_lock(&fichero);
         writeLogMessage(identificador, mensaje);
-        printf("%s: %s", identificador, mensaje);
+        printf("%s: %s\n", identificador, mensaje);
         pthread_mutex_unlock(&fichero);
     }
 
@@ -627,6 +636,7 @@ void* accionesRecepcionista(void* arg)
     char mensaje[200];
     //Condicion variable global 
     int fin;
+    int cliEsp;
     printf("Recepcionista %d empieza su jornada\n", recepcionista[1]);
     // Punto 1 y 2
 
@@ -635,7 +645,9 @@ void* accionesRecepcionista(void* arg)
     fin = acabar;
     pthread_mutex_unlock(&finalizar);
 
-    while (fin != 1) {
+    cliEsp = sizeClientes();
+
+    while (!(fin && CliEsp == 0)) {
         //printf("Buscando Clientes %d\n", recepcionista[1]);
         pthread_mutex_lock(&colaClientes);
 
@@ -707,12 +719,12 @@ void* accionesRecepcionista(void* arg)
 
             } else if (porcentaje > 90) {
 
+                sleep(aleatorios(6, 10));
+
                 sprintf(mensaje, "El cliente %d no presenta el pasapaorte vacunal",clientes[posicion].id);
                 pthread_mutex_lock(&fichero);
                 writeLogMessage(identificador, mensaje);
                 pthread_mutex_unlock(&fichero);
-
-                sleep(aleatorios(6, 10));
 
                 printf("%s : %s \n", identificador, mensaje);
                 pthread_mutex_lock(&colaClientes);
@@ -729,7 +741,9 @@ void* accionesRecepcionista(void* arg)
             // siempre que sea no vip
             if (recepcionista[0] == 0) {
                 contador += 1;
+                printf("El rececpcionista %d lleva %d clientes atendidos desde el ultimo descanso\n",recepcionista[1],contador);
                 if (contador == 5) {
+                    printf("Descansando %d\n",recepcionista[1]);
                     contador = 0;
                     sleep(5);
                 }
@@ -739,6 +753,8 @@ void* accionesRecepcionista(void* arg)
         pthread_mutex_lock(&finalizar);
         fin = acabar;
         pthread_mutex_unlock(&finalizar);
+
+        cliEsp = sizeClientes();
     }
 }
 
@@ -747,15 +763,21 @@ int aleatorios(int min, int max)
     return rand() % (max - min + 1) + min;
 }
 
-void fin()
-{
+void fin(){
     pthread_mutex_lock(&finalizar);
     acabar = 1;
     pthread_mutex_unlock(&finalizar);
+
+    pthread_mutex_lock(&ascensor);
+    estadoAscensor = 0;
+    pthread_mutex_unlock(&ascensor);
+
+    sleep(6);
+
+    pthread_cond_signal(&condiciones[numClientesAscensor]);
 }
 
-int sizeClientes()
-{
+int sizeClientes(){
     int res = 0;
     pthread_mutex_lock(&colaClientes);
     for (int i = 0; i < numClientes; i++) {
@@ -769,8 +791,7 @@ int sizeClientes()
 
 //Aumentar el numero de clientes o máquinas mientras el programa está en ejecución
 
-void aumentar()
-{
+void aumentar(){
     int num = 0;
     int aumento = 0;
     int tries = 0;
@@ -804,6 +825,8 @@ void aumentar()
             }
             pthread_mutex_unlock(&colaClientes);
 
+            printf("Se aumento correctamente\n");
+
             pthread_mutex_lock(&fichero);
             sprintf(mensaje, "Aumento de clientes a %d", numClientes);
             writeLogMessage("Main", mensaje);
@@ -826,6 +849,8 @@ void aumentar()
             }
             pthread_mutex_unlock(&maquinas);
 
+            printf("Se aumento Correctamente\n");
+
             pthread_mutex_lock(&fichero);
             sprintf(mensaje, "Aumento de maquinas a %d", numMaquinas);
             writeLogMessage("Main", mensaje);
@@ -839,8 +864,7 @@ void aumentar()
     }
 }
 
-void writeLogMessage(char* id, char* msg)
-{
+void writeLogMessage(char* id, char* msg){
     // Calculamos la hora actual
     time_t now = time(0);
     struct tm* tlocal = localtime(&now);

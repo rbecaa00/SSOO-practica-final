@@ -128,7 +128,7 @@ int main(int argc, char* argv[]){
         numMaquinas = 5;
     }
 
-    estadoAscensor = 0;
+    estadoAscensor = 1;
     contClientes = 0;
     acabar = 0;
 
@@ -208,7 +208,8 @@ void nuevoCliente(int signal) {
     pthread_mutex_unlock(&finalizar);
 
     if (fin == 0) {
-        printf("Hay nuevo cliente\n") int posicionCliente = -1;
+        printf("Hay nuevo cliente\n");
+        int posicionCliente = -1;
         // Se bloquea el mutex
         pthread_mutex_lock(&colaClientes);
         // Bucle para asignar la posición en el id
@@ -462,11 +463,12 @@ void* accionesCliente(void* arg) {
         pthread_mutex_lock(&ascensor);
 
         espAs++;
-
+        printf("Estado ascensor: %d\n", estadoAscensor);
         while (!estadoAscensor || numClientesAscensor >= 6) {
 
             // printf(identificador, "Cliente %d:", id);
             sprintf(mensaje, "Esta esperando por el ascensor");
+            printf("Estado ascensor: %d\n", estadoAscensor);
             pthread_mutex_lock(&fichero);
             writeLogMessage(identificador, mensaje);
             printf("%s: %s\n", identificador, mensaje);
@@ -493,6 +495,7 @@ void* accionesCliente(void* arg) {
         pthread_mutex_lock(&ascensor);
 
         if ((fin && espAs == 0) || posAs >= 6) {
+            printf("Soy el ultimo %d, somos %d\n",id,numClientesAscensor);
 
             estadoAscensor = 0;
 
@@ -500,23 +503,30 @@ void* accionesCliente(void* arg) {
             sleep(6);
             pthread_mutex_lock(&ascensor);
 
-            pthread_cond_signal(&conAscensor[]);
+            pthread_cond_signal(&conAscensor[posAs-1]);
 
         } else {
+            printf("Espero en el ascensor %d, somos %d\n",id,numClientesAscensor);
+
             pthread_cond_wait(&conAscensor[posAs], &ascensor);
         }
 
         numClientesAscensor--;
 
-        pthread_cond_signal(&conAscensor[numClientesAscensor]);
+        printf("Me voy %d, quedan %d\n",id,numClientesAscensor);
 
         if (numClientesAscensor == 0) {
+
+            printf("Soy el ultimo %d\n",id);
+
             estadoAscensor = 1;
+        }else{
+            pthread_cond_signal(&conAscensor[numClientesAscensor]); 
         }
 
         pthread_mutex_unlock(&ascensor);
 
-        printf(identificador, "Cliente %d:\n", id);
+        sprintf(identificador, "Cliente %d:", id);
         sprintf(mensaje, "Deja el ascensor");
         pthread_mutex_lock(&fichero);
         writeLogMessage(identificador, mensaje);
@@ -554,7 +564,7 @@ void* accionesRecepcionista(void* arg) {
 
     cliEsp = sizeClientes();
 
-    while (!(fin && CliEsp == 0)) {
+    while (!(fin && cliEsp == 0)) {
         // printf("Buscando Clientes %d\n", recepcionista[1]);
         pthread_mutex_lock(&colaClientes);
 
@@ -678,7 +688,9 @@ void fin() {
 
     sleep(6);
 
-    pthread_cond_signal(&condiciones[numClientesAscensor]);
+    pthread_mutex_lock(&ascensor);
+    pthread_cond_signal(&conAscensor[numClientesAscensor]);
+    pthread_mutex_unlock(&ascensor);
 }
 
 int sizeClientes() {

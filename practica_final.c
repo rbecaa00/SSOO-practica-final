@@ -685,15 +685,24 @@ void fin() {
     acabar = 1;
     pthread_mutex_unlock(&finalizar);
 
-    pthread_mutex_lock(&ascensor);
-    estadoAscensor = 0;
-    pthread_mutex_unlock(&ascensor);
-
-    sleep(6);
+    
 
     pthread_mutex_lock(&ascensor);
-    pthread_cond_signal(&conAscensor[numClientesAscensor]);
+    if(numClientesAscensor > 0){
+
+        estadoAscensor = 0;
+        
+        pthread_mutex_unlock(&ascensor);
+
+        sleep(6);
+
+        pthread_mutex_lock(&ascensor);
+        pthread_cond_signal(&conAscensor[numClientesAscensor]);
+        
+    }
+
     pthread_mutex_unlock(&ascensor);
+    
 }
 
 int sizeClientes() {

@@ -475,8 +475,9 @@ void* accionesCliente(void* arg) {
             pthread_mutex_unlock(&fichero);
 
             // pthread_cond_wait(&conAscensor[0],&ascensor);
-
+            pthread_mutex_unlock(&ascensor);
             sleep(3);
+            pthread_mutex_lock(&ascensor);
         }
 
         espAs--;
@@ -500,7 +501,9 @@ void* accionesCliente(void* arg) {
             estadoAscensor = 0;
 
             pthread_mutex_unlock(&ascensor);
+
             sleep(6);
+
             pthread_mutex_lock(&ascensor);
 
             pthread_cond_signal(&conAscensor[posAs-1]);

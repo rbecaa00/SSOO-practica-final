@@ -68,6 +68,7 @@ int main(int argc, char* argv[]){
      */
     struct sigaction sNV;
     sNV.sa_handler = nuevoCliente;
+    sNV.sa_flags = 0;
     sigemptyset(&sNV.sa_mask);
     if (-1 == sigaction(SIGUSR1, &sNV, NULL)) {
         // sprintf(ids, "%d", getpid());
@@ -81,6 +82,7 @@ int main(int argc, char* argv[]){
 
     struct sigaction sV;
     sV.sa_handler = nuevoCliente;
+    sV.sa_flags = 0;
     sigemptyset(&sV.sa_mask);
     if (-1 == sigaction(SIGUSR2, &sV, NULL)) {
         // sprintf(ids, "%d", getpid());
@@ -94,6 +96,7 @@ int main(int argc, char* argv[]){
 
     struct sigaction sC;
     sC.sa_handler = fin;
+    sC.sa_flags = 0;
     sigemptyset(&sC.sa_mask);
     if (-1 == sigaction(SIGINT, &sC, NULL)) {
         // sprintf(ids, "%d", getpid());
@@ -107,6 +110,7 @@ int main(int argc, char* argv[]){
 
     struct sigaction sA;
     sA.sa_handler = aumentar;
+    sA.sa_flags = 0;
     sigemptyset(&sA.sa_mask);
     if (-1 == sigaction(SIGILL, &sA, NULL)) {
         // sprintf(ids, "%d", getpid());
@@ -444,7 +448,32 @@ void* accionesCliente(void* arg) {
     fin = acabar;
     pthread_mutex_unlock(&finalizar);
 
-    if (fin || num <= 30) {
+    int aux = num <= 30;
+
+    pthread_mutex_lock(&ascensor);
+
+    while(aux == 0 && !fin && !estadoAscensor){
+        pthread_mutex_unlock(&ascensor);
+
+        sprintf(mensaje, "Esta esperando por el ascensor");
+        printf("Estado ascensor: %d\n", estadoAscensor);
+        pthread_mutex_lock(&fichero);
+        writeLogMessage(identificador, mensaje);
+        printf("%s: %s\n", identificador, mensaje);
+        pthread_mutex_unlock(&fichero);
+
+        sleep(3);
+
+
+        pthread_mutex_lock(&finalizar);
+        fin = acabar;
+        pthread_mutex_unlock(&finalizar);
+
+    }
+
+    pthread_mutex_unlock(&ascensor);
+
+    if (fin || aux) {
         // sprintf(identificador, "Cliente %d:", id);
         sprintf(mensaje, "Me fui para la habitacion por las escaleras\n");
         pthread_mutex_lock(&fichero);
@@ -463,7 +492,7 @@ void* accionesCliente(void* arg) {
         pthread_mutex_lock(&colaClientes);
         clientes[posicionCliente].ascensor = 1;
         pthread_mutex_unlock(&colaClientes);
-
+        /*
         pthread_mutex_lock(&ascensor);
 
         espAs++;
@@ -485,7 +514,7 @@ void* accionesCliente(void* arg) {
         }
 
         espAs--;
-
+        */
         posAs = ++numClientesAscensor;
 
         pthread_mutex_unlock(&ascensor);
@@ -499,7 +528,7 @@ void* accionesCliente(void* arg) {
 
         pthread_mutex_lock(&ascensor);
 
-        if ((fin && espAs == 0) || posAs >= 6) {
+        if (/*(fin && espAs == 0) ||*/ posAs >= 6) {
             printf("Soy el ultimo %d, somos %d\n",id,numClientesAscensor);
 
             estadoAscensor = 0;

@@ -68,6 +68,7 @@ int main(int argc, char* argv[]){
      */
     struct sigaction sNV;
     sNV.sa_handler = nuevoCliente;
+    sigemptyset(&sNV.sa_mask);
     if (-1 == sigaction(SIGUSR1, &sNV, NULL)) {
         // sprintf(ids, "%d", getpid());
         writeLogMessage("Main", "Fallo montando la señal de no vips");
@@ -80,6 +81,7 @@ int main(int argc, char* argv[]){
 
     struct sigaction sV;
     sV.sa_handler = nuevoCliente;
+    sigemptyset(&sV.sa_mask);
     if (-1 == sigaction(SIGUSR2, &sV, NULL)) {
         // sprintf(ids, "%d", getpid());
         writeLogMessage("Main", "Fallo montando la señal de vips");
@@ -92,6 +94,7 @@ int main(int argc, char* argv[]){
 
     struct sigaction sC;
     sC.sa_handler = fin;
+    sigemptyset(&sC.sa_mask);
     if (-1 == sigaction(SIGINT, &sC, NULL)) {
         // sprintf(ids, "%d", getpid());
         writeLogMessage("Main", "Fallo montando la señal de terminar");
@@ -104,6 +107,7 @@ int main(int argc, char* argv[]){
 
     struct sigaction sA;
     sA.sa_handler = aumentar;
+    sigemptyset(&sA.sa_mask);
     if (-1 == sigaction(SIGILL, &sA, NULL)) {
         // sprintf(ids, "%d", getpid());
         writeLogMessage("Main", "Fallo montando la señal de aumentar");

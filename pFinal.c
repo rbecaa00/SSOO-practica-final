@@ -7,12 +7,15 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-pthread_mutex_t fichero;
+//Declaraciones globales: mutex
+pthread_mutex_t fichero; 
 pthread_mutex_t colaClientes;
 pthread_mutex_t ascensor;
 pthread_mutex_t maquinas;
 pthread_mutex_t finalizar;
 
+// Struct de cliente con sus características
+//Lista de 20 clientes
 struct cliente {
     int id;
     int atendido; // Tipo boolean 0 no atendido 1 atendido
@@ -20,24 +23,29 @@ struct cliente {
     int ascensor;
 };
 
+//Condiciones para el ascensor y los clientes que deben subir
 int numClientesAscensor;
 pthread_cond_t conAscensor[6];
 int estadoAscensor;
 
+//Contador de clientes y maquinas (en forma de puntero/lista)
 struct cliente* clientes;
 int* maquinasCheckin;
 
 int numClientes;
 int contClientes;
 int numMaquinas;
-int acabar;
+int acabar; //Condicion para acabar la ejecución del programa 
 
-char logFileName[19];
+//Nombre del fichero log donde se guarda la ejecución del programa
+char logFileName[19]; 
 
 FILE* logFile;
 
 char ids[20];
 
+
+//Definimos las funciones
 void nuevoCliente(int signal);
 void* accionesCliente(void* arg);
 void* accionesRecepcionista(void* arg);
@@ -45,7 +53,7 @@ void writeLogMessage(char* id, char* msg);
 int aleatorios(int min, int max);
 void fin();
 int sizeClientes();
-void aumentar();
+void aumentar(); //Aumentar maquinas y clientes en tiempo de ejecución
 
 /**
  * Implementado por Rubén Bécares Álvarez
@@ -66,6 +74,7 @@ int main(int argc, char* argv[]){
      * Montado de señales
      *
      */
+     //Cliente no vip (SIGUSR1)
     struct sigaction sNV;
     sNV.sa_handler = nuevoCliente;
     sNV.sa_flags = 0;
@@ -79,46 +88,49 @@ int main(int argc, char* argv[]){
         // sprintf(ids, "%d", getpid());
         writeLogMessage("Main", "Se ha montando la señal de no vips");
     }
-
+    
+    //Cliente vip (SIGUSR2)
     struct sigaction sV;
     sV.sa_handler = nuevoCliente;
     sV.sa_flags = 0;
     sigemptyset(&sV.sa_mask);
     if (-1 == sigaction(SIGUSR2, &sV, NULL)) {
-        // sprintf(ids, "%d", getpid());
+       
         writeLogMessage("Main", "Fallo montando la señal de vips");
         perror("Fallo montando la señal de vips");
         return 1;
     } else {
-        // sprintf(ids, "%d", getpid());
+       
         writeLogMessage("Main", "Se ha montando la señal de vips");
     }
 
+    //Señal para terminar (SIGINT)
     struct sigaction sC;
     sC.sa_handler = fin;
     sC.sa_flags = 0;
     sigemptyset(&sC.sa_mask);
     if (-1 == sigaction(SIGINT, &sC, NULL)) {
-        // sprintf(ids, "%d", getpid());
+       
         writeLogMessage("Main", "Fallo montando la señal de terminar");
         perror("Fallo montando la señal de terminar");
         return 1;
     } else {
-        // sprintf(ids, "%d", getpid());
+       
         writeLogMessage("Main", "Se ha montando la señal de terminar");
     }
 
+   //Parte obtativa, aumenar clientes y maquinas en tiempo de ejecución
     struct sigaction sA;
     sA.sa_handler = aumentar;
     sA.sa_flags = 0;
     sigemptyset(&sA.sa_mask);
     if (-1 == sigaction(SIGILL, &sA, NULL)) {
-        // sprintf(ids, "%d", getpid());
+       
         writeLogMessage("Main", "Fallo montando la señal de aumentar");
         perror("Fallo montando la señal de aumentar");
         return 1;
     } else {
-        // sprintf(ids, "%d", getpid());
+      
         writeLogMessage("Main", "Se ha montando la señal de aumentar");
     }
 
@@ -150,6 +162,9 @@ int main(int argc, char* argv[]){
         clientes[i].ascensor = 0;
     }
 
+    /**
+    Maquinas de Checking ponerlas todas libres
+    */
     for (int i = 0; i < numMaquinas; i++) {
         maquinasCheckin[i] = 0;
     }
@@ -175,7 +190,10 @@ int main(int argc, char* argv[]){
             exit(-1);
         }
     }
+     /**
+     Creacion de los hilos de los recepcionistas
 
+     */
     pthread_t recepcionista_1, recepcionista_2, recepcionista_3;
     int r1[] = { 0, 1 };
     int r2[] = { 0, 2 };
@@ -184,13 +202,16 @@ int main(int argc, char* argv[]){
     pthread_create(&recepcionista_2, NULL, accionesRecepcionista, &r2);
     pthread_create(&recepcionista_3, NULL, accionesRecepcionista, &r3);
 
-    printf("Prueba\n");
-    printf("Montados recepcionistas\n");
 
+    /**
+    Esperando signals de forma infinita 
+    */
     while (!acabar) {
         pause();
     }
-
+     /**
+    Sincronizacion entre hilos 
+     */
     pthread_join(recepcionista_1, NULL);
     pthread_join(recepcionista_2, NULL);
     pthread_join(recepcionista_3, NULL);
@@ -201,22 +222,29 @@ int main(int argc, char* argv[]){
 
     free(clientes);
 
-    // sprintf(ids, "%d", getpid());
+   
     writeLogMessage("Main", "Fin programa");
 
     return 0;
 }
 
+
+/**
+
+FUNCION NUEVO CLIENTE
+
+*/
+
 void nuevoCliente(int signal) {
-    printf("Llega un cliente\n");
     int fin;
 
+    //Protegemos la varible global con un mutex
     pthread_mutex_lock(&finalizar);
     fin = acabar;
     pthread_mutex_unlock(&finalizar);
 
+    //Comprobamos si hay espacion en la cola de clientes
     if (fin == 0) {
-        printf("Hay nuevo cliente\n");
         int posicionCliente = -1;
         // Se bloquea el mutex
         pthread_mutex_lock(&colaClientes);
@@ -224,17 +252,15 @@ void nuevoCliente(int signal) {
         for (int i = 0; i < numClientes && posicionCliente == -1; i++) {
             if (clientes[i].id == 0) {
                 posicionCliente = i;
-                printf("Hueco encontrado\n");
             }
         }
 
         // Caso en el que no caben más clientes
         if (posicionCliente == -1) {
-            printf("No se admiten más clientes\n");
+            
         }
         // Caso en el que caben más clientes y se añade un nuevo cliente
         else {
-            printf("Hay un nuevo CLIENTE en el hotel\n");
             contClientes++;
             clientes[posicionCliente].id = contClientes;
             clientes[posicionCliente].atendido = 0;
@@ -243,16 +269,17 @@ void nuevoCliente(int signal) {
             // Diferencia entre clientes VIPS y normales
             switch (signal) {
             case SIGUSR1:
-                printf("Nuevo cliente no VIP\n");
+                
                 clientes[posicionCliente].tipo = 0;
                 break;
             case SIGUSR2:
-                printf("Nuevo cliente VIP\n");
+             
                 clientes[posicionCliente].tipo = 1;
                 break;
             }
 
-            // Se crea un hilo nuevo donde irá el cliente nuevo
+            // Se crea un hilo nuevo donde ira el cliente nuevo
+            //NOTA: Si no hay espacio se ignora la llamada
             pthread_t aux;
             int r1[] = { posicionCliente };
             pthread_create(&aux, NULL, accionesCliente, &r1);
@@ -263,11 +290,17 @@ void nuevoCliente(int signal) {
 }
 
 // Hilo
+
+/**
+
+ACCIONES CLIENTE
+
+*/
 void* accionesCliente(void* arg) {
     char identificador[20];
     char mensaje[75];
     int posicionCliente = ((int*)arg)[0];
-    printf("Posicion:%d\n", posicionCliente);
+    
     int checkin = 0;
     int waiting = 1;
     // int bucle = 0;
@@ -301,6 +334,10 @@ void* accionesCliente(void* arg) {
         checkin = 1;
     }
 
+
+    /**
+    Comprueba si el cliente ha sido atendido
+    */
     pthread_mutex_lock(&colaClientes);
     atendido = clientes[posicionCliente].atendido;
     pthread_mutex_unlock(&colaClientes);
@@ -362,21 +399,25 @@ void* accionesCliente(void* arg) {
                 pthread_mutex_unlock(&fichero);
                 sleep(3);
             }
-            // sleep(3);
+            
         } else {
-            printf("Buscando maquina libre %d\n", id);
+
+            /**
+            Busca si hay mquinas libres
+            */
+           
             maquinasCheckinVariable = 0;
             i = 0;
 
             pthread_mutex_lock(&maquinas);
 
             while (maquinasCheckinVariable != 1 && i < numMaquinas) {
-                printf("%d\n", maquinasCheckin[i]);
+             
                 if (maquinasCheckin[i] == 0) {
                     maquinasCheckinVariable = 1;
                     maquinasCheckin[i] = 1;
 
-                    printf("Maquina encontrada %d\n", id);
+                   
                 }
 
                 i++;
@@ -386,12 +427,12 @@ void* accionesCliente(void* arg) {
 
             if (maquinasCheckinVariable == 1) {
                 i--;
-                printf("Haciendo checkin de cliente %d en maquina %d\n", id, i);
+                
 
                 pthread_mutex_lock(&colaClientes);
                 clientes[posicionCliente].atendido = 2;
                 pthread_mutex_unlock(&colaClientes);
-
+                //Hay maquina libre, entonces duerme 6 segundos (simula la atencion)
                 sleep(6);
 
                 pthread_mutex_lock(&maquinas);
@@ -403,7 +444,7 @@ void* accionesCliente(void* arg) {
                 pthread_mutex_unlock(&colaClientes);
 
             } else {
-
+                //No hay maquinas, duerme 3 segundos
                 sleep(3);
 
                 num = aleatorios(1, 100);
@@ -417,7 +458,11 @@ void* accionesCliente(void* arg) {
         atendido = clientes[posicionCliente].atendido;
         pthread_mutex_unlock(&colaClientes);
     }
-    if (atendido == 4) {
+
+    /**
+    Comprobar si está siendo atendido
+    */
+    if (atendido == 4) { //TERMINADO de ATENDER
         // sprintf(identificador, "Cliente %d:", id);
         sprintf(mensaje, "Me han terminado de atender.\n");
         pthread_mutex_lock(&fichero);
@@ -432,9 +477,7 @@ void* accionesCliente(void* arg) {
         pthread_exit(0);
     }
 
-    while (atendido == 2) {
-        printf("Estoy siendo atendido %d\n", id);
-
+    while (atendido == 2) { //SIENDO ATENDIDO
         sleep(2);
 
         pthread_mutex_lock(&colaClientes);
@@ -452,6 +495,9 @@ void* accionesCliente(void* arg) {
 
     pthread_mutex_lock(&ascensor);
 
+    /**
+    Miramos si está esperando por el ascensor
+    */
     while(aux == 0 && !fin && !estadoAscensor){
         pthread_mutex_unlock(&ascensor);
 
@@ -473,8 +519,11 @@ void* accionesCliente(void* arg) {
 
     pthread_mutex_unlock(&ascensor);
 
+
+    /**
+    El cliente se fue por las escaleras
+    */
     if (fin || aux) {
-        // sprintf(identificador, "Cliente %d:", id);
         sprintf(mensaje, "Me fui para la habitacion por las escaleras\n");
         pthread_mutex_lock(&fichero);
         writeLogMessage(identificador, mensaje);
@@ -492,29 +541,9 @@ void* accionesCliente(void* arg) {
         pthread_mutex_lock(&colaClientes);
         clientes[posicionCliente].ascensor = 1;
         pthread_mutex_unlock(&colaClientes);
-        /*
-        pthread_mutex_lock(&ascensor);
+        
 
-        espAs++;
-        printf("Estado ascensor: %d\n", estadoAscensor);
-        while (!estadoAscensor || numClientesAscensor >= 6) {
-
-            // printf(identificador, "Cliente %d:", id);
-            sprintf(mensaje, "Esta esperando por el ascensor");
-            printf("Estado ascensor: %d\n", estadoAscensor);
-            pthread_mutex_lock(&fichero);
-            writeLogMessage(identificador, mensaje);
-            printf("%s: %s\n", identificador, mensaje);
-            pthread_mutex_unlock(&fichero);
-
-            // pthread_cond_wait(&conAscensor[0],&ascensor);
-            pthread_mutex_unlock(&ascensor);
-            sleep(3);
-            pthread_mutex_lock(&ascensor);
-        }
-
-        espAs--;
-        */
+        //Se incrementa el NUMERO DE CLIENTES EN EL ASCENSOR
         posAs = ++numClientesAscensor;
 
         pthread_mutex_unlock(&ascensor);
@@ -528,8 +557,7 @@ void* accionesCliente(void* arg) {
 
         pthread_mutex_lock(&ascensor);
 
-        if (/*(fin && espAs == 0) ||*/ posAs >= 6) {
-            printf("Soy el ultimo %d, somos %d\n",id,numClientesAscensor);
+        if ( posAs >= 6) {
 
             estadoAscensor = 0;
 
@@ -539,21 +567,20 @@ void* accionesCliente(void* arg) {
 
             pthread_mutex_lock(&ascensor);
 
+            //Libera su posicion del ascensor
             pthread_cond_signal(&conAscensor[posAs-1]);
 
         } else {
-            printf("Espero en el ascensor %d, somos %d\n",id,numClientesAscensor);
 
             pthread_cond_wait(&conAscensor[posAs], &ascensor);
         }
 
         numClientesAscensor--;
 
-        printf("Me voy %d, quedan %d\n",id,numClientesAscensor);
 
         if (numClientesAscensor == 0) {
 
-            printf("Soy el ultimo %d\n",id);
+            //Es el último, marca que EL ASCENSOR HA DEJADO DE FUNCIONAR
 
             estadoAscensor = 1;
         }else{
@@ -562,6 +589,9 @@ void* accionesCliente(void* arg) {
 
         pthread_mutex_unlock(&ascensor);
 
+        /**
+        Se indica que ha dejado el ascensor
+        */
         sprintf(identificador, "Cliente %d:", id);
         sprintf(mensaje, "Deja el ascensor");
         pthread_mutex_lock(&fichero);
@@ -570,6 +600,9 @@ void* accionesCliente(void* arg) {
         pthread_mutex_unlock(&fichero);
     }
 
+    /**
+    Libera su posición en la cola de clientes y se va
+    */
     pthread_mutex_lock(&colaClientes);
     clientes[posicionCliente].id = 0;
     pthread_mutex_unlock(&colaClientes);
@@ -590,7 +623,7 @@ void* accionesRecepcionista(void* arg) {
     // Condicion variable global
     int fin;
     int cliEsp;
-    printf("Recepcionista %d empieza su jornada\n", recepcionista[1]);
+ 
     // Punto 1 y 2
 
     // Protegemos la variable
@@ -601,7 +634,7 @@ void* accionesRecepcionista(void* arg) {
     cliEsp = sizeClientes();
 
     while (!(fin && cliEsp == 0)) {
-        // printf("Buscando Clientes %d\n", recepcionista[1]);
+   
         pthread_mutex_lock(&colaClientes);
 
         min = contClientes + 1;
@@ -612,7 +645,6 @@ void* accionesRecepcionista(void* arg) {
 
                 porcentaje = aleatorios(1, 100);
                 if (clientes[i].id != 0 && min > clientes[i].id) {
-                    printf("Mismo tipo valido sin atender\n");
                     min = clientes[i].id;
                     posicion = i;
                 }
@@ -626,7 +658,7 @@ void* accionesRecepcionista(void* arg) {
         pthread_mutex_unlock(&colaClientes);
 
         if (posicion == -1) {
-            // printf("No encontre clientes %d\n", recepcionista[1]);
+           
             sleep(1);
             // Hacemos que duerma 1 segundo ya que no ha econtrado clietnes
 
@@ -637,9 +669,11 @@ void* accionesRecepcionista(void* arg) {
             pthread_mutex_lock(&fichero);
             writeLogMessage(identificador, mensaje);
             pthread_mutex_unlock(&fichero);
-            // Se podría poner al inicio del programa, ya que es una de las primeras
-            // cosas que hace.
 
+            /** Se podría poner al inicio del programa, ya que es una de las primeras
+                 cosas que hace.
+            */
+             
             if (porcentaje <= 80) {
 
                 sprintf(mensaje, "El cliente %d tiene todo en regla", clientes[posicion].id);
@@ -684,18 +718,21 @@ void* accionesRecepcionista(void* arg) {
                 pthread_mutex_unlock(&colaClientes);
             }
 
+
             sprintf(mensaje, "Ha finalizado la atención");
             pthread_mutex_lock(&fichero);
             writeLogMessage(identificador, mensaje);
             pthread_mutex_unlock(&fichero);
 
-            // PAUSA para el café cuando el recepcionista haya atendidio a 5 clientes,
-            // siempre que sea no vip
+            /**
+             PAUSA para el café cuando el recepcionista haya atendidio a 5 clientes,
+             siempre que sea no vip
+             */
             if (recepcionista[0] == 0) {
                 contador += 1;
-                printf("El rececpcionista %d lleva %d clientes atendidos desde el ultimo descanso\n", recepcionista[1], contador);
+         
                 if (contador == 5) {
-                    printf("Descansando %d\n", recepcionista[1]);
+                //Ha atendido a 5 clientes, descansa
                     contador = 0;
                     sleep(5);
                 }
@@ -705,6 +742,7 @@ void* accionesRecepcionista(void* arg) {
         fin = acabar;
         pthread_mutex_unlock(&finalizar);
 
+        //Los clientes en espera
         cliEsp = sizeClientes();
     }
 }
@@ -713,6 +751,11 @@ int aleatorios(int min, int max) { // Función para calcular numeros aleatorios
     return rand() % (max - min + 1) + min;
 }
 
+
+    /**
+    Fumcion para terminar el proceso 
+    Todos deben de haber abandonado el ascensor
+    */
 void fin() {
     pthread_mutex_lock(&finalizar);
     acabar = 1;
@@ -738,6 +781,9 @@ void fin() {
     
 }
 
+    /**
+    Numero de clientes totales que han pasado por el hotel
+    */
 int sizeClientes() {
     int res = 0;
     pthread_mutex_lock(&colaClientes);
@@ -750,7 +796,7 @@ int sizeClientes() {
     return res;
 }
 
-// Aumentar el numero de clientes o máquinas mientras el programa está en ejecución
+// Aumentar el numero de clientes o maquinas mientras el programa esta en ejecucion
 
 void aumentar() {
     int num = 0;
@@ -825,6 +871,9 @@ void aumentar() {
     }
 }
 
+     /**
+    Escribir los logs en el fichero
+     */
 void writeLogMessage(char* id, char* msg) {
     // Calculamos la hora actual
     time_t now = time(0);

@@ -18,7 +18,7 @@ pthread_mutex_t finalizar;
 //Lista de 20 clientes
 struct cliente {
     int id;
-    int atendido; // Tipo boolean 0 no atendido 1 atendido
+    int atendido; // 0=esperando recepcionista; 1=esperando maquina; 2=haciendo checkin; 3=atendido; 4=se va
     int tipo; // Tipo boolean 0 no vip 1 vip
     int ascensor;
 };
@@ -56,7 +56,7 @@ int sizeClientes();
 void aumentar(); //Aumentar maquinas y clientes en tiempo de ejecución
 
 /**
- * Implementado por Rubén Bécares Álvarez
+ * Funcion main y receptor de señales
  */
 int main(int argc, char* argv[]){
     /**
@@ -273,7 +273,7 @@ void nuevoCliente(int signal) {
                 clientes[posicionCliente].tipo = 0;
                 break;
             case SIGUSR2:
-             
+            
                 clientes[posicionCliente].tipo = 1;
                 break;
             }
@@ -303,8 +303,6 @@ void* accionesCliente(void* arg) {
     
     int checkin = 0;
     int waiting = 1;
-    // int bucle = 0;
-    // int ascensor;
 
     int posAs;
     int fin;
@@ -316,7 +314,7 @@ void* accionesCliente(void* arg) {
     pthread_mutex_unlock(&colaClientes);
 
     // sprintf sirve para crear una cadena y guardarla en una variable
-    sprintf(identificador, "Cliente %d:", id);
+    sprintf(identificador, "Cliente %d", id);
     sprintf(mensaje, "acabo de entrar en el hotel");
     // Lock del mutex para que el writeMessage vaya uno a uno al log
     pthread_mutex_lock(&fichero);
@@ -392,7 +390,7 @@ void* accionesCliente(void* arg) {
                 pthread_exit(NULL);
             } else {
                 // sprintf(identificador,"Cliente %d:",id);
-                sprintf(mensaje, "Estoy esperando en la cola para ser atendido.\n");
+                sprintf(mensaje, "Estoy esperando en la cola para ser atendido");
                 pthread_mutex_lock(&fichero);
                 writeLogMessage(identificador, mensaje);
                 printf("%s: %s\n", identificador, mensaje);
@@ -405,19 +403,17 @@ void* accionesCliente(void* arg) {
             /**
             Busca si hay mquinas libres
             */
-           
+            
             maquinasCheckinVariable = 0;
             i = 0;
 
             pthread_mutex_lock(&maquinas);
 
             while (maquinasCheckinVariable != 1 && i < numMaquinas) {
-             
+            
                 if (maquinasCheckin[i] == 0) {
                     maquinasCheckinVariable = 1;
                     maquinasCheckin[i] = 1;
-
-                   
                 }
 
                 i++;
@@ -464,7 +460,7 @@ void* accionesCliente(void* arg) {
     */
     if (atendido == 4) { //TERMINADO de ATENDER
         // sprintf(identificador, "Cliente %d:", id);
-        sprintf(mensaje, "Me han terminado de atender.\n");
+        sprintf(mensaje, "Me han terminado de atender");
         pthread_mutex_lock(&fichero);
         writeLogMessage(identificador, mensaje);
         printf("%s: %s\n", identificador, mensaje);
@@ -502,7 +498,7 @@ void* accionesCliente(void* arg) {
         pthread_mutex_unlock(&ascensor);
 
         sprintf(mensaje, "Esta esperando por el ascensor");
-        printf("Estado ascensor: %d\n", estadoAscensor);
+        //printf("Estado ascensor: %d\n", estadoAscensor);
         pthread_mutex_lock(&fichero);
         writeLogMessage(identificador, mensaje);
         printf("%s: %s\n", identificador, mensaje);
@@ -524,7 +520,7 @@ void* accionesCliente(void* arg) {
     El cliente se fue por las escaleras
     */
     if (fin || aux) {
-        sprintf(mensaje, "Me fui para la habitacion por las escaleras\n");
+        sprintf(mensaje, "Me fui para la habitacion por las escaleras");
         pthread_mutex_lock(&fichero);
         writeLogMessage(identificador, mensaje);
         printf("%s: %s\n", identificador, mensaje);
@@ -592,7 +588,7 @@ void* accionesCliente(void* arg) {
         /**
         Se indica que ha dejado el ascensor
         */
-        sprintf(identificador, "Cliente %d:", id);
+        sprintf(identificador, "Cliente %d", id);
         sprintf(mensaje, "Deja el ascensor");
         pthread_mutex_lock(&fichero);
         writeLogMessage(identificador, mensaje);

@@ -221,6 +221,7 @@ int main(int argc, char* argv[]){
     }
 
     free(clientes);
+    free(maquinasCheckin); 
 
    
     writeLogMessage("Main", "Fin programa");
@@ -793,7 +794,6 @@ int sizeClientes() {
 }
 
 // Aumentar el numero de clientes o maquinas mientras el programa esta en ejecucion
-
 void aumentar() {
     int num = 0;
     int aumento = 0;
@@ -816,15 +816,21 @@ void aumentar() {
             /* Redimensionamos el puntero y lo asignamos a un puntero temporal */
             pthread_mutex_lock(&colaClientes);
             struct cliente* tmp_clie;
-            tmp_clie = (struct cliente*)realloc(clientes, sizeof(struct cliente) * (num + numClientes));
+            tmp_clie = (struct cliente*)realloc(clientes, sizeof(struct cliente) * (aumento + numClientes));
 
             if (tmp_clie == NULL) {
                 // printf("Hubo un error en el aumento de capacidad\n");
                 perror("Hubo un error en el aumento de capacidad\n");
             } else {
                 /* Reasignación exitosa. Asignar memoria a clientes */
+                for(int i = numClientes; i < numClientes+aumento; i++){
+                    tmp_clie[i].id = 0;
+                    tmp_clie[i].tipo = 0;
+                    tmp_clie[i].atendido = 0;
+                    tmp_clie[i].ascensor = 0;
+                }
                 clientes = tmp_clie;
-                numClientes += num;
+                numClientes += aumento;
             }
             pthread_mutex_unlock(&colaClientes);
 
@@ -840,15 +846,18 @@ void aumentar() {
             /* Redimensionamos el puntero y lo asignamos a un puntero temporal */
             pthread_mutex_lock(&maquinas);
             int* tmp_maq;
-            tmp_maq = (int*)realloc(clientes, sizeof(int) * (num + numMaquinas));
+            tmp_maq = (int*)realloc(maquinasCheckin, sizeof(int) * (aumento + numMaquinas));
 
             if (tmp_maq == NULL) {
                 // printf("Hubo un error en el aumento de capacidad");
                 perror("Hubo un error en el aumento de capacidad\n");
             } else {
                 /* Reasignación exitosa. Asignar memoria a clientes */
+                for(int i = numMaquinas; i < numMaquinas+aumento; i++){
+                    tmp_maq[i] = 0;
+                }
                 maquinasCheckin = tmp_maq;
-                numMaquinas += num;
+                numMaquinas += aumento;
             }
             pthread_mutex_unlock(&maquinas);
 
@@ -866,6 +875,7 @@ void aumentar() {
         printf("Demasiados intentos incorrectos\n");
     }
 }
+
 
      /**
     Escribir los logs en el fichero
